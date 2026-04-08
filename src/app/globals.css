@@ -1,26 +1,173 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ================================================================
+   RUANGTEDUH — Design System v1.0
+   Aesthetic: Emotional · Fun · Modern · Futuristic · Light · Elegant
+   ================================================================ */
+
+@theme {
+  /* ── Sage Green (Primary) ── */
+  --color-sage-50:  #F0F5F1;
+  --color-sage-100: #D8EAD9;
+  --color-sage-200: #C5D8C8;
+  --color-sage-300: #A9C9AC;
+  --color-sage-400: #8FAF94;
+  --color-sage-500: #6D9474;
+  --color-sage-600: #5A7D61;
+  --color-sage-700: #4A6B50;
+  --color-sage-800: #3A5840;
+  --color-sage-900: #2D4A35;
+
+  /* ── Lavender (Secondary) ── */
+  --color-lavender-50:  #F3F1FB;
+  --color-lavender-100: #DDD8EF;
+  --color-lavender-200: #C9C2E5;
+  --color-lavender-300: #B8A9D9;
+  --color-lavender-400: #A591CC;
+  --color-lavender-500: #9278BF;
+  --color-lavender-600: #7A5DAF;
+
+  /* ── Warm Peach (Accent) ── */
+  --color-peach-50:  #FDF6F1;
+  --color-peach-100: #FAE8DC;
+  --color-peach-200: #F5D5C0;
+  --color-peach-300: #F0C4A8;
+  --color-peach-400: #E8AA84;
+  --color-peach-500: #D98F60;
+
+  /* ── Soft Sky (Calm) ── */
+  --color-sky-50:  #EFF8FD;
+  --color-sky-100: #D6EDF8;
+  --color-sky-200: #A8D4E8;
+  --color-sky-300: #7BBDD9;
+  --color-sky-400: #55A8C9;
+  --color-sky-500: #3A8EAF;
+
+  /* ── Mint (Joy) ── */
+  --color-mint-50:  #F0FAF5;
+  --color-mint-100: #D4F0E2;
+  --color-mint-200: #A8E0C6;
+
+  /* ── Neutrals ── */
+  --color-cream:        #FAFAF7;
+  --color-cream-dark:   #F3EDE5;
+  --color-forest:       #2D4A35;
+  --color-forest-light: #3D5A45;
+  --color-muted:        #8B9E8F;
+  --color-muted-light:  #B5C5B8;
+  --color-border:       #E2EDE3;
+
+  /* ── Typography ── */
+  --font-display: var(--font-lora), "Georgia", serif;
+  --font-sans:    var(--font-inter), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Custom Animations ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(0.96); }
+}
+
+@keyframes blob-morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25%       { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50%       { border-radius: 50% 60% 30% 60% / 40% 30% 60% 50%; }
+  75%       { border-radius: 40% 60% 50% 30% / 60% 40% 30% 50%; }
+}
+
+@keyframes shimmer-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Animate Utilities ── */
+.animate-float       { animation: float 5s ease-in-out infinite; }
+.animate-float-slow  { animation: float 8s ease-in-out infinite; }
+.animate-float-delay { animation: float-delayed 6s ease-in-out infinite 1.5s; }
+.animate-pulse-soft  { animation: pulse-soft 3s ease-in-out infinite; }
+.animate-blob        { animation: blob-morph 10s ease-in-out infinite; }
+.animate-blob-rev    { animation: blob-morph 12s ease-in-out infinite reverse 2s; }
+
+/* ── Global Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #FAFAF7;
+  color: #2D4A35;
+  font-family: var(--font-sans);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #F0F5F1; }
+::-webkit-scrollbar-thumb { background: #A9C9AC; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #6D9474; }
+
+/* ── Text Selection ── */
+::selection { background-color: #C5D8C8; color: #2D4A35; }
+
+/* ── Focus Ring ── */
+:focus-visible {
+  outline: 2px solid #6D9474;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ── Glass Effect ── */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.glass-sage {
+  background: rgba(240, 245, 241, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(197, 216, 200, 0.5);
+}
+
+/* ── Gradient Text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #5A7D61 0%, #8FAF94 45%, #B8A9D9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Blob Shape ── */
+.blob-1 { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+.blob-2 { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+.blob-3 { border-radius: 50% 50% 30% 70% / 40% 60% 40% 60%; }
+
+/* ── Shimmer Loading ── */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer-slide 1.5s infinite;
 }
