@@ -9,7 +9,7 @@ import {
   ArrowRight, ArrowLeft, Check, User as UserIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { mapGoogleOAuthErrorMessage } from "@/lib/auth/oauth";
+import { mapOAuthErrorMessage } from "@/lib/auth/oauth";
 
 /* ══════════════════════════════════════════════════════════
    SUPABASE-READY TYPES  (PRD Bagian 7 — Data Model)
@@ -675,11 +675,11 @@ export default function RegisterPage() {
         },
       });
       if (oauthError) {
-        setErrors({ full_name: mapGoogleOAuthErrorMessage(oauthError.message) });
+        setErrors({ full_name: mapOAuthErrorMessage(oauthError.message) });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Terjadi kesalahan tidak terduga.";
-      setErrors({ full_name: mapGoogleOAuthErrorMessage(message) });
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan saat menghubungkan dengan Google.";
+      setErrors({ full_name: mapOAuthErrorMessage(message) });
     } finally {
       setIsGoogleLoading(false);
     }
