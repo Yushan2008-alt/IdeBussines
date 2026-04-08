@@ -49,14 +49,18 @@ const MOOD_LABEL_MAP: Record<MoodId, string> = {
 };
 
 const MOOD_TOOLTIP_LABEL = "Mood";
+const MS_PER_DAY = 86400000;
+const TREND_SIGNIFICANT_DELTA = 0.6;
+const MOOD_ORDER: ReadonlyArray<MoodId> = ["kewalahan", "sedih", "biasa", "tenang", "damai"];
+
 const MOOD_THRESHOLDS = {
-  kewalahan: 1.6,
-  sedih: 2.8,
-  biasa: 3.85,
-  tenang: 4.65,
+  kewalahan: (MOOD_SCORE_MAP.kewalahan + MOOD_SCORE_MAP.sedih) / 2,
+  sedih: (MOOD_SCORE_MAP.sedih + MOOD_SCORE_MAP.biasa) / 2,
+  biasa: (MOOD_SCORE_MAP.biasa + MOOD_SCORE_MAP.tenang) / 2,
+  tenang: (MOOD_SCORE_MAP.tenang + MOOD_SCORE_MAP.damai) / 2,
 } as const;
 
-const RECENCY_WEIGHT_BY_DAYS_AGO = [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1] as const;
+const WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO = [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1] as const;
 
 const EMOTIONAL_SUGGESTION: Record<MoodId, string> = {
   kewalahan: "Minggu ini terasa berat. Coba ambil jeda 5 menit untuk tarik napas perlahan dan pilih satu hal kecil yang paling bisa kamu selesaikan hari ini.",
@@ -91,8 +95,8 @@ function trendDirection(points: ChartPoint[]): "membaik" | "menurun" | "stabil" 
   if (withData.length < 2) return "stabil";
   const first = withData[0].score ?? 0;
   const last = withData[withData.length - 1].score ?? 0;
-  if (last - first >= 0.6) return "membaik";
-  if (first - last >= 0.6) return "menurun";
+  if (last - first >= TREND_SIGNIFICANT_DELTA) return "membaik";
+  if (first - last >= TREND_SIGNIFICANT_DELTA) return "menurun";
   return "stabil";
 }
 
@@ -103,9 +107,9 @@ function getRecencyWeight(createdAtIso: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const diffInDays = Math.floor((today.getTime() - entryDate.getTime()) / 86400000);
-  if (diffInDays < 0 || diffInDays >= RECENCY_WEIGHT_BY_DAYS_AGO.length) return 1;
-  return RECENCY_WEIGHT_BY_DAYS_AGO[diffInDays];
+  const diffInDays = Math.floor((today.getTime() - entryDate.getTime()) / MS_PER_DAY);
+  if (diffInDays < 0 || diffInDays >= WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO.length) return 1;
+  return WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO[diffInDays];
 }
 
 function extractNumericValue(value: ValueType | undefined): number | null {
@@ -116,6 +120,14 @@ function extractNumericValue(value: ValueType | undefined): number | null {
   }
   if (Array.isArray(value) && value.length > 0 && typeof value[0] === "number") return value[0];
   return null;
+}
+
+function closestMoodId(score: number): MoodId {
+  return MOOD_ORDER.reduce((closest, current) => {
+    const closestDistance = Math.abs(score - MOOD_SCORE_MAP[closest]);
+    const currentDistance = Math.abs(score - MOOD_SCORE_MAP[current]);
+    return currentDistance < closestDistance ? current : closest;
+  }, MOOD_ORDER[0]);
 }
 
 function extractFullDate(payload: ReadonlyArray<Payload<ValueType, NameType>>): string {
@@ -210,7 +222,7 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
       }
 
       const dominantMoodId = moodFromScore(averageScore);
-      const dominantMoodLabel = MOOD_LABEL_MAP[dominantMoodId];
+      const dominantMoodLabel = MOOD_LABEL_MAP[closestMoodId(averageScore)];
       const trend = trendDirection(points);
 
       setOverallMoodText(`Overall mood saya seminggu ini adalah ${dominantMoodLabel}.`);
