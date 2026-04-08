@@ -120,6 +120,7 @@ const FALLBACK_AFFIRMATIONS = [
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DEFAULT_BOOKING_OFFSET_DAYS = 1;
+const DEFAULT_READ_TIME_MINUTES = 3;
 
 const BREATH_PHASES = ["Tarik napas...", "Tahan...", "Hembuskan...", "Istirahat..."] as const;
 
@@ -247,12 +248,6 @@ export default function RuangTeduhApp() {
         .limit(20);
       if (resources && resources.length > 0) {
         setResources(resources);
-        const idx = (new Date().getUTCDate() - 1) % resources.length;
-        const picked = resources[idx];
-        setDailyAffirmation({
-          text: `Hari ini cukup satu langkah kecil: ${picked.title}.`,
-          author: "RuangTeduh",
-        });
       }
 
       // Fetch daily challenge
@@ -282,7 +277,7 @@ export default function RuangTeduhApp() {
   const [counselors,     setCounselors]     = useState<Counselor[]>(FALLBACK_EXPERTS);
   const [resources,      setResources]      = useState<Resource[]>(FALLBACK_RESOURCES);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(FALLBACK_CHALLENGE);
-  const [dailyAffirmation, setDailyAffirmation] = useState<{ text: string; author: string }>(() => ({
+  const [dailyAffirmation] = useState<{ text: string; author: string }>(() => ({
     text: FALLBACK_AFFIRMATIONS[(new Date().getUTCDate() - 1) % FALLBACK_AFFIRMATIONS.length],
     author: "Anonim",
   }));
@@ -1136,7 +1131,7 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
                   </div>
                 ) : (
                   <span className="text-[10px] text-peach-500 font-bold bg-peach-100 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 ml-2">
-                    {(res.read_time_minutes ?? 3)} Min Baca
+                    {(res.read_time_minutes ?? DEFAULT_READ_TIME_MINUTES)} Min Baca
                   </span>
                 )}
               </motion.div>
@@ -1146,8 +1141,8 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
             )}
           </div>
           <a
-            href={resources[0]?.url ?? "#"}
-            target={resources[0]?.url ? "_blank" : undefined}
+            href={displayedResources[0]?.url ?? "#"}
+            target={displayedResources[0]?.url ? "_blank" : undefined}
             rel="noreferrer"
             className="w-full mt-5 bg-peach-50 text-peach-500 font-semibold text-sm py-3.5 rounded-full hover:bg-peach-100 transition-colors border border-peach-100 block text-center"
           >
