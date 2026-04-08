@@ -1131,7 +1131,7 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
                   </div>
                 ) : (
                   <span className="text-[10px] text-peach-500 font-bold bg-peach-100 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 ml-2">
-                    {(res.read_time_minutes ?? DEFAULT_READ_TIME_MINUTES)} Min Baca
+                    {(res.read_time_minutes ?? DEFAULT_READ_TIME_MINUTES)} Min. Baca
                   </span>
                 )}
               </motion.div>
@@ -1146,7 +1146,7 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
             rel="noreferrer"
             className="w-full mt-5 bg-peach-50 text-peach-500 font-semibold text-sm py-3.5 rounded-full hover:bg-peach-100 transition-colors border border-peach-100 block text-center"
           >
-            Lihat Semua Materi
+            Buka Materi Terbaru
           </a>
         </div>
       </div>
