@@ -83,13 +83,24 @@ export default function LoginPage() {
     setError(null);
     setIsGoogleLoading(true);
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          skipBrowserRedirect: true,
         },
       });
-      if (oauthError) setError(mapOAuthErrorMessage(oauthError.message));
+      if (oauthError) {
+        setError(mapOAuthErrorMessage(oauthError.message));
+        return;
+      }
+
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      setError("Gagal memulai autentikasi Google. Coba lagi beberapa saat.");
     } catch (err) {
       const message =
         err instanceof Error
