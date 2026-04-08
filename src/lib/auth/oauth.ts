@@ -1,5 +1,5 @@
 const GOOGLE_PROVIDER_DISABLED_MESSAGE =
-  "Autentikasi Google belum aktif di konfigurasi Supabase. Aktifkan provider Google terlebih dulu, lalu coba lagi.";
+  "Autentikasi Google belum aktif di konfigurasi Supabase. Aktifkan provider Google terlebih dahulu, lalu coba lagi.";
 const GOOGLE_REDIRECT_MISCONFIGURED_MESSAGE =
   "Konfigurasi URL callback Google belum sesuai. Periksa Site URL dan Additional Redirect URLs di Supabase.";
 
