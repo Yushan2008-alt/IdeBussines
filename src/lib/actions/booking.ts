@@ -130,7 +130,7 @@ export async function bookCounselorSession(counselorId: string): Promise<Booking
     is_read: false,
   });
   if (notifError) {
-    console.error("[session notification insert]", notifError.message);
+    console.error(`[session notification insert failed for user ${user.id}]`, notifError.message);
   }
 
   revalidatePath("/dashboard");
