@@ -48,10 +48,9 @@ const MOOD_LABEL_MAP: Record<MoodId, string> = {
   damai: "Damai",
 };
 
-const MOOD_TOOLTIP_LABEL = "Mood";
+const MOOD_TOOLTIP_LABEL_ID = "Mood";
 const MS_PER_DAY = 86400000;
 const TREND_SIGNIFICANT_DELTA = 0.6;
-const MOOD_ORDER: ReadonlyArray<MoodId> = ["kewalahan", "sedih", "biasa", "tenang", "damai"];
 
 const MOOD_THRESHOLDS = {
   kewalahan: (MOOD_SCORE_MAP.kewalahan + MOOD_SCORE_MAP.sedih) / 2,
@@ -120,14 +119,6 @@ function extractNumericValue(value: ValueType | undefined): number | null {
   }
   if (Array.isArray(value) && value.length > 0 && typeof value[0] === "number") return value[0];
   return null;
-}
-
-function closestMoodId(score: number): MoodId {
-  return MOOD_ORDER.reduce((closest, current) => {
-    const closestDistance = Math.abs(score - MOOD_SCORE_MAP[closest]);
-    const currentDistance = Math.abs(score - MOOD_SCORE_MAP[current]);
-    return currentDistance < closestDistance ? current : closest;
-  }, MOOD_ORDER[0]);
 }
 
 function extractFullDate(payload: ReadonlyArray<Payload<ValueType, NameType>>): string {
@@ -222,7 +213,7 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
       }
 
       const dominantMoodId = moodFromScore(averageScore);
-      const dominantMoodLabel = MOOD_LABEL_MAP[closestMoodId(averageScore)];
+      const dominantMoodLabel = MOOD_LABEL_MAP[dominantMoodId];
       const trend = trendDirection(points);
 
       setOverallMoodText(`Overall mood saya seminggu ini adalah ${dominantMoodLabel}.`);
@@ -288,8 +279,8 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
               <Tooltip
                 formatter={(value: ValueType | undefined) => {
                   const numericValue = extractNumericValue(value);
-                  if (numericValue === null) return ["Belum ada data", MOOD_TOOLTIP_LABEL];
-                  return [`Skor ${numericValue.toFixed(2)}`, MOOD_TOOLTIP_LABEL];
+                  if (numericValue === null) return ["Belum ada data", MOOD_TOOLTIP_LABEL_ID];
+                  return [`Skor ${numericValue.toFixed(2)}`, MOOD_TOOLTIP_LABEL_ID];
                 }}
                 labelFormatter={(_label: React.ReactNode, payload: ReadonlyArray<Payload<ValueType, NameType>>) => extractFullDate(payload)}
                 contentStyle={{ borderRadius: "14px", borderColor: "#DDE8DD" }}
