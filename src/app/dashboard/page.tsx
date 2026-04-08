@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 
 /* ══════════════════════════════════════════════════════════
    FALLBACK DATA
-   Digunakan saat data Supabase belum tersedia.
+   Used when Supabase data is unavailable.
 ══════════════════════════════════════════════════════════ */
 
 const HOTLINES = [
@@ -116,6 +116,10 @@ const FALLBACK_AFFIRMATIONS = [
   "Satu langkah kecil hari ini tetap berarti besar untuk dirimu yang esok.",
   "Kamu tidak harus selalu kuat; cukup jujur pada perasaanmu hari ini.",
 ] as const;
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DEFAULT_BOOKING_OFFSET_DAYS = 1;
 
 const BREATH_PHASES = ["Tarik napas...", "Tahan...", "Hembuskan...", "Istirahat..."] as const;
 
@@ -243,7 +247,7 @@ export default function RuangTeduhApp() {
         .limit(20);
       if (resources && resources.length > 0) {
         setResources(resources);
-        const idx = new Date().getDate() % resources.length;
+        const idx = (new Date().getUTCDate() - 1) % resources.length;
         const picked = resources[idx];
         setDailyAffirmation({
           text: `Hari ini cukup satu langkah kecil: ${picked.title}.`,
@@ -279,7 +283,7 @@ export default function RuangTeduhApp() {
   const [resources,      setResources]      = useState<Resource[]>(FALLBACK_RESOURCES);
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(FALLBACK_CHALLENGE);
   const [dailyAffirmation, setDailyAffirmation] = useState<{ text: string; author: string }>(() => ({
-    text: FALLBACK_AFFIRMATIONS[new Date().getDate() % FALLBACK_AFFIRMATIONS.length],
+    text: FALLBACK_AFFIRMATIONS[(new Date().getUTCDate() - 1) % FALLBACK_AFFIRMATIONS.length],
     author: "Anonim",
   }));
 
@@ -1016,8 +1020,8 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
       setBookingMessage("Silakan login ulang untuk memesan sesi.");
       return;
     }
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(counselorId)) {
-      setBookingMessage("Direktori demo aktif. Booking akan tersedia setelah data konselor terverifikasi sinkron.");
+    if (!UUID_PATTERN.test(counselorId)) {
+      setBookingMessage("Mode demo aktif. Booking tersedia setelah data konselor terverifikasi tersinkron.");
       return;
     }
 
@@ -1025,7 +1029,7 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
     setBookingMessage(null);
 
     const scheduledDate = new Date();
-    scheduledDate.setDate(scheduledDate.getDate() + 1);
+    scheduledDate.setDate(scheduledDate.getDate() + DEFAULT_BOOKING_OFFSET_DAYS);
     const scheduledAt = scheduledDate.toISOString();
     const { error } = await supabase.from("sessions").insert({
       user_id: currentUserId,
