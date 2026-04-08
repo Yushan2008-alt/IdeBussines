@@ -121,8 +121,6 @@ const FALLBACK_AFFIRMATIONS = [
   "Kamu tidak harus selalu kuat; cukup jujur pada perasaanmu hari ini.",
 ] as const;
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DEFAULT_READ_TIME_MINUTES = 3;
 
 const BREATH_PHASES = ["Tarik napas...", "Tahan...", "Hembuskan...", "Istirahat..."] as const;
@@ -1016,13 +1014,6 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources }: TabBantuanProps
   const displayedResources = resources.slice(0, 2);
 
   const handleBook = async (counselorId: string) => {
-    if (!UUID_PATTERN.test(counselorId)) {
-      setBookingStatus({
-        kind: "info",
-        message: "Fitur booking belum tersedia untuk data demo.",
-      });
-      return;
-    }
     if (isBooking) {
       setBookingStatus({
         kind: "info",

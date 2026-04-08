@@ -23,6 +23,10 @@ function formatBookingDate(iso: string): string {
   });
 }
 
+function sanitizeText(value: string): string {
+  return value.replace(/[<>&]/g, "").replace(/\s+/g, " ").trim();
+}
+
 export async function bookCounselorSession(counselorId: string): Promise<BookingActionResult> {
   if (!UUID_PATTERN.test(counselorId)) {
     return {
@@ -118,10 +122,11 @@ export async function bookCounselorSession(counselorId: string): Promise<Booking
     };
   }
 
+  const safeCounselorName = sanitizeText(counselor.full_name) || "konselor";
   const { error: notifError } = await supabase.from("notifications").insert({
     user_id: user.id,
     type: "session_reminder",
-    message: `Booking konsultasi dengan ${counselor.full_name} berhasil dibuat.`,
+    message: `Booking konsultasi dengan ${safeCounselorName} berhasil dibuat.`,
     is_read: false,
   });
   if (notifError) {
