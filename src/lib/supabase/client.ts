@@ -12,12 +12,15 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-// Fallback values prevent the SSR shell from crashing when .env.local
-// is not configured. The client won't make real requests until real
-// values are provided.
-const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "https://placeholder.supabase.co";
-const SUPABASE_KEY  = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder";
-
 export function createClient() {
-  return createBrowserClient(SUPABASE_URL, SUPABASE_KEY);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "Supabase env belum dikonfigurasi. Pastikan NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY tersedia."
+    );
+  }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
