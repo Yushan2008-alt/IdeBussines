@@ -9,6 +9,7 @@ import {
   ArrowRight, ArrowLeft, Check, User as UserIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { mapGoogleOAuthErrorMessage } from "@/lib/auth/oauth";
 
 /* ══════════════════════════════════════════════════════════
    SUPABASE-READY TYPES  (PRD Bagian 7 — Data Model)
@@ -194,11 +195,12 @@ interface Step1Props {
   clearError: (key: keyof FormErrors) => void;
   onNext:     () => void;
   onGoogle:   () => void;
+  isGoogleLoading: boolean;
 }
 
 function Step1({
   form, errors, showPw, showCPw,
-  setShowPw, setShowCPw, update, clearError, onNext, onGoogle,
+  setShowPw, setShowCPw, update, clearError, onNext, onGoogle, isGoogleLoading,
 }: Step1Props) {
   const inputClass = (errKey: keyof FormErrors, extra = "") =>
     `w-full py-3.5 bg-white border rounded-2xl text-sm text-forest placeholder:text-muted-light focus:outline-none focus:ring-2 transition-all font-medium shadow-sm ${extra} ${
@@ -340,12 +342,13 @@ function Step1({
           onClick={onGoogle}
           whileHover={{ scale: 1.02, y: -1 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-3 border border-border bg-white py-3.5 rounded-2xl font-semibold text-sm text-forest hover:bg-sage-50 hover:border-sage-200 transition-all shadow-sm"
+          disabled={isGoogleLoading}
+          className="w-full flex items-center justify-center gap-3 border border-border bg-white py-3.5 rounded-2xl font-semibold text-sm text-forest hover:bg-sage-50 hover:border-sage-200 transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <div className="w-5 h-5 rounded-full bg-[#4285F4] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
             G
           </div>
-          Daftar dengan Google
+          {isGoogleLoading ? "Memproses Google..." : "Daftar dengan Google"}
         </motion.button>
 
         <p className="text-center text-xs text-muted-light leading-relaxed">
@@ -574,6 +577,7 @@ export default function RegisterPage() {
   const [showPw,    setShowPw]    = useState(false);
   const [showCPw,   setShowCPw]   = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   /* ── Helpers ── */
   const update = <K extends keyof RegisterForm>(key: K, val: RegisterForm[K]) =>
@@ -661,13 +665,24 @@ export default function RegisterPage() {
 
   /* ── Google OAuth sign-up ── */
   const handleGoogle = async () => {
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-      },
-    });
-    if (oauthError) setErrors({ full_name: oauthError.message });
+    setErrors((prev) => ({ ...prev, full_name: undefined }));
+    setIsGoogleLoading(true);
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
+      });
+      if (oauthError) {
+        setErrors({ full_name: mapGoogleOAuthErrorMessage(oauthError.message) });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan tidak terduga.";
+      setErrors({ full_name: mapGoogleOAuthErrorMessage(message) });
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   /* ══════════════════════════════════════════════════════
@@ -738,6 +753,7 @@ export default function RegisterPage() {
                   clearError={clearError}
                   onNext={handleNext}
                   onGoogle={handleGoogle}
+                  isGoogleLoading={isGoogleLoading}
                 />
               )}
               {step === 2 && (
