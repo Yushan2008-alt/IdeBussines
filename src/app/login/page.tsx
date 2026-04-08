@@ -91,7 +91,10 @@ export default function LoginPage() {
       });
       if (oauthError) setError(mapOAuthErrorMessage(oauthError.message));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Terjadi kesalahan saat menghubungkan dengan Google.";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan saat menghubungkan dengan Google. Silakan coba lagi atau gunakan login email.";
       setError(mapOAuthErrorMessage(message));
     } finally {
       setIsGoogleLoading(false);
