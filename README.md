@@ -17,6 +17,9 @@ Tanpa dua variables `NEXT_PUBLIC_SUPABASE_*`, autentikasi tidak akan berjalan.
 - Redirect aplikasi menggunakan callback internal: `/auth/callback`
 - URL callback aplikasi yang dipakai saat OAuth: `https://<domain-anda>/auth/callback?next=/dashboard`
 - Pastikan **Site URL** dan **Additional Redirect URLs** di Supabase Auth sudah mengizinkan domain Vercel Anda.
+- Wajib aktifkan provider Google di **Supabase Dashboard → Authentication → Providers → Google**.
+- Isi **Google Client ID** dan **Google Client Secret** dari Google Cloud Console.
+- Jika provider belum aktif, Supabase akan mengembalikan error: `Unsupported provider: provider is not enabled`.
 
 ## Getting Started
 
