@@ -94,7 +94,7 @@ export default function LoginPage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Terjadi kesalahan saat menghubungkan dengan Google. Cek koneksi internet, lalu coba lagi atau gunakan login email.";
+          : "Terjadi kesalahan saat menghubungkan dengan Google. Pastikan pop-up tidak diblokir, lalu coba lagi atau gunakan login email.";
       setError(mapOAuthErrorMessage(message));
     } finally {
       setIsGoogleLoading(false);
