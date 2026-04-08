@@ -118,6 +118,15 @@ function extractNumericValue(value: ValueType | undefined): number | null {
   return null;
 }
 
+function extractFullDate(payload: ReadonlyArray<Payload<ValueType, NameType>>): string {
+  const candidate = payload[0]?.payload;
+  if (candidate && typeof candidate === "object" && "fullDate" in candidate) {
+    const fullDate = (candidate as { fullDate?: unknown }).fullDate;
+    if (typeof fullDate === "string") return fullDate;
+  }
+  return "";
+}
+
 export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyInsightsProps) {
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [overallMoodText, setOverallMoodText] = useState("Overall mood saya seminggu ini adalah Belum terdeteksi.");
@@ -270,10 +279,7 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
                   if (numericValue === null) return ["Belum ada data", MOOD_TOOLTIP_LABEL];
                   return [`Skor ${numericValue.toFixed(2)}`, MOOD_TOOLTIP_LABEL];
                 }}
-                labelFormatter={(_label: React.ReactNode, payload: ReadonlyArray<Payload<ValueType, NameType>>) => {
-                  const firstPayload = payload[0]?.payload as ChartPoint | undefined;
-                  return firstPayload?.fullDate ?? "";
-                }}
+                labelFormatter={(_label: React.ReactNode, payload: ReadonlyArray<Payload<ValueType, NameType>>) => extractFullDate(payload)}
                 contentStyle={{ borderRadius: "14px", borderColor: "#DDE8DD" }}
               />
               <Area
