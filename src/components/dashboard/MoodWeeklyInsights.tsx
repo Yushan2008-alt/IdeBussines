@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { NameType, Payload, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import { createClient } from "@/lib/supabase/client";
 import type { MoodId } from "@/types/supabase";
 
@@ -33,9 +34,9 @@ interface ChartPoint {
 
 const MOOD_SCORE_MAP: Record<MoodId, number> = {
   kewalahan: 1,
-  sedih: 2,
-  biasa: 3,
-  tenang: 4,
+  sedih: 2.2,
+  biasa: 3.4,
+  tenang: 4.3,
   damai: 5,
 };
 
@@ -49,11 +50,13 @@ const MOOD_LABEL_MAP: Record<MoodId, string> = {
 
 const MOOD_TOOLTIP_LABEL = "Mood";
 const MOOD_THRESHOLDS = {
-  kewalahan: 1.5,
-  sedih: 2.5,
-  biasa: 3.5,
-  tenang: 4.5,
+  kewalahan: 1.6,
+  sedih: 2.8,
+  biasa: 3.85,
+  tenang: 4.65,
 } as const;
+
+const RECENCY_WEIGHT_BY_DAYS_AGO = [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1] as const;
 
 const EMOTIONAL_SUGGESTION: Record<MoodId, string> = {
   kewalahan: "Minggu ini terasa berat. Coba ambil jeda 5 menit untuk tarik napas perlahan dan pilih satu hal kecil yang paling bisa kamu selesaikan hari ini.",
@@ -91,6 +94,28 @@ function trendDirection(points: ChartPoint[]): "membaik" | "menurun" | "stabil" 
   if (last - first >= 0.6) return "membaik";
   if (first - last >= 0.6) return "menurun";
   return "stabil";
+}
+
+function getRecencyWeight(createdAtIso: string): number {
+  const entryDate = new Date(createdAtIso);
+  entryDate.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffInDays = Math.floor((today.getTime() - entryDate.getTime()) / 86400000);
+  if (diffInDays < 0 || diffInDays >= RECENCY_WEIGHT_BY_DAYS_AGO.length) return 1;
+  return RECENCY_WEIGHT_BY_DAYS_AGO[diffInDays];
+}
+
+function extractNumericValue(value: ValueType | undefined): number | null {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  if (Array.isArray(value) && value.length > 0 && typeof value[0] === "number") return value[0];
+  return null;
 }
 
 export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyInsightsProps) {
@@ -155,9 +180,16 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
         };
       });
 
-      const allScores = rows.map((row) => MOOD_SCORE_MAP[row.mood_id]);
-      const averageScore = allScores.length
-        ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length
+      const weighted = rows.map((row) => {
+        const score = MOOD_SCORE_MAP[row.mood_id];
+        const weight = getRecencyWeight(row.created_at);
+        return { score, weight };
+      });
+
+      const weightedScoreTotal = weighted.reduce((sum, item) => sum + (item.score * item.weight), 0);
+      const weightedWeightTotal = weighted.reduce((sum, item) => sum + item.weight, 0);
+      const averageScore = weightedWeightTotal > 0
+        ? weightedScoreTotal / weightedWeightTotal
         : null;
 
       if (averageScore === null) {
@@ -233,11 +265,15 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
                 tick={{ fill: "#6B7280", fontSize: 12 }}
               />
               <Tooltip
-                formatter={(value: number | null) => {
-                  if (typeof value !== "number") return ["Belum ada data", MOOD_TOOLTIP_LABEL];
-                  return [`Skor ${value.toFixed(2)}`, MOOD_TOOLTIP_LABEL];
+                formatter={(value: ValueType | undefined) => {
+                  const numericValue = extractNumericValue(value);
+                  if (numericValue === null) return ["Belum ada data", MOOD_TOOLTIP_LABEL];
+                  return [`Skor ${numericValue.toFixed(2)}`, MOOD_TOOLTIP_LABEL];
                 }}
-                labelFormatter={(_label, payload: Array<{ payload: ChartPoint }>) => payload?.[0]?.payload?.fullDate ?? ""}
+                labelFormatter={(_label: React.ReactNode, payload: ReadonlyArray<Payload<ValueType, NameType>>) => {
+                  const firstPayload = payload[0]?.payload as ChartPoint | undefined;
+                  return firstPayload?.fullDate ?? "";
+                }}
                 contentStyle={{ borderRadius: "14px", borderColor: "#DDE8DD" }}
               />
               <Area
