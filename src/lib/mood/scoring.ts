@@ -13,7 +13,8 @@ const DEFAULT_MOOD_SCORE_MAP: Record<MoodId, number> = {
   damai: 5,
 };
 
-const DEFAULT_WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO = [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1];
+// Index mapping: 0 = hari ini (0 hari lalu), ..., 6 = 6 hari lalu.
+const DEFAULT_RECENCY_WEIGHTS_BY_DAYS_AGO = [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1];
 const DEFAULT_TREND_SIGNIFICANT_DELTA = 0.6;
 
 function isValidPositiveNumber(value: unknown): value is number {
@@ -47,7 +48,7 @@ function parseMoodScoreMap(raw: string | undefined): Record<MoodId, number> {
 function parseRecencyWeights(raw: string | undefined): number[] {
   const parsed = parseJson(raw);
   if (!Array.isArray(parsed) || parsed.length !== RECENCY_WINDOW_DAYS) {
-    return DEFAULT_WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO;
+    return DEFAULT_RECENCY_WEIGHTS_BY_DAYS_AGO;
   }
 
   const values = parsed.map((item) => {
@@ -56,7 +57,7 @@ function parseRecencyWeights(raw: string | undefined): number[] {
   });
 
   if (values.some((item) => item === null)) {
-    return DEFAULT_WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO;
+    return DEFAULT_RECENCY_WEIGHTS_BY_DAYS_AGO;
   }
 
   return values as number[];
