@@ -33,7 +33,7 @@ interface ChartPoint {
   moodLabel: string;
 }
 
-const { moodScoreMap: MOOD_SCORE_MAP, moodThresholds: MOOD_THRESHOLDS } = moodScoringConfig;
+const { moodScoreMap, moodThresholds } = moodScoringConfig;
 
 const MOOD_LABEL_MAP: Record<MoodId, string> = {
   kewalahan: "Kewalahan",
@@ -62,10 +62,10 @@ function toDayKey(date: Date): string {
 }
 
 function moodFromScore(score: number): MoodId {
-  if (score <= MOOD_THRESHOLDS.kewalahan) return "kewalahan";
-  if (score <= MOOD_THRESHOLDS.sedih) return "sedih";
-  if (score <= MOOD_THRESHOLDS.biasa) return "biasa";
-  if (score <= MOOD_THRESHOLDS.tenang) return "tenang";
+  if (score <= moodThresholds.kewalahan) return "kewalahan";
+  if (score <= moodThresholds.sedih) return "sedih";
+  if (score <= moodThresholds.biasa) return "biasa";
+  if (score <= moodThresholds.tenang) return "tenang";
   return "damai";
 }
 
@@ -152,7 +152,7 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
       const dayMap = new Map<string, { total: number; count: number }>();
 
       for (const row of rows) {
-        const score = MOOD_SCORE_MAP[row.mood_id];
+        const score = moodScoreMap[row.mood_id];
         const key = toDayKey(new Date(row.created_at));
         const current = dayMap.get(key) ?? { total: 0, count: 0 };
         dayMap.set(key, { total: current.total + score, count: current.count + 1 });
@@ -178,7 +178,7 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
       });
 
       const weighted = rows.map((row) => {
-        const score = MOOD_SCORE_MAP[row.mood_id];
+        const score = moodScoreMap[row.mood_id];
         const weight = getRecencyWeight(row.created_at);
         return { score, weight };
       });
