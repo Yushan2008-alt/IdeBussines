@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import type { NameType, Payload, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import { createClient } from "@/lib/supabase/client";
-import { loadMoodScoringConfigFromEnv } from "@/lib/mood/scoring";
+import { moodScoringConfig } from "@/lib/mood/scoring";
 import type { MoodId } from "@/types/supabase";
 
 interface MoodWeeklyInsightsProps {
@@ -33,8 +33,7 @@ interface ChartPoint {
   moodLabel: string;
 }
 
-const MOOD_SCORING_CONFIG = loadMoodScoringConfigFromEnv();
-const { moodScoreMap: MOOD_SCORE_MAP, moodThresholds: MOOD_THRESHOLDS } = MOOD_SCORING_CONFIG;
+const { moodScoreMap: MOOD_SCORE_MAP, moodThresholds: MOOD_THRESHOLDS } = moodScoringConfig;
 
 const MOOD_LABEL_MAP: Record<MoodId, string> = {
   kewalahan: "Kewalahan",
@@ -80,8 +79,8 @@ function trendDirection(points: ChartPoint[]): "membaik" | "menurun" | "stabil" 
   if (withData.length < 2) return "stabil";
   const first = withData[0].score ?? 0;
   const last = withData[withData.length - 1].score ?? 0;
-  if (last - first >= MOOD_SCORING_CONFIG.trendSignificantDelta) return "membaik";
-  if (first - last >= MOOD_SCORING_CONFIG.trendSignificantDelta) return "menurun";
+  if (last - first >= moodScoringConfig.trendSignificantDelta) return "membaik";
+  if (first - last >= moodScoringConfig.trendSignificantDelta) return "menurun";
   return "stabil";
 }
 
@@ -93,8 +92,8 @@ function getRecencyWeight(createdAtIso: string): number {
   today.setHours(0, 0, 0, 0);
 
   const diffInDays = Math.floor((today.getTime() - entryDate.getTime()) / MS_PER_DAY);
-  if (diffInDays < 0 || diffInDays >= MOOD_SCORING_CONFIG.weeklyRecencyWeightByDaysAgo.length) return 1;
-  return MOOD_SCORING_CONFIG.weeklyRecencyWeightByDaysAgo[diffInDays];
+  if (diffInDays < 0 || diffInDays >= moodScoringConfig.weeklyRecencyWeightByDaysAgo.length) return 1;
+  return moodScoringConfig.weeklyRecencyWeightByDaysAgo[diffInDays];
 }
 
 function extractNumericValue(value: ValueType | undefined): number | null {
