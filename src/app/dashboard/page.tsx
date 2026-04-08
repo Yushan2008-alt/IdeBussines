@@ -427,23 +427,20 @@ interface TabHomeProps {
 }
 
 function TabHome({ userName, onOpenBot, challengeDone, setChallengeDone }: TabHomeProps) {
-  const [greeting,     setGreeting]     = useState("Selamat Pagi");
+  const [greeting] = useState(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Selamat Pagi";
+    if (hour < 15) return "Selamat Siang";
+    if (hour < 18) return "Selamat Sore";
+    return "Selamat Malam";
+  });
   const [selectedMood, setSelectedMood] = useState<MoodId | null>(null);
   const [isBreathing,  setIsBreathing]  = useState(false);
   const [phaseIdx,     setPhaseIdx]     = useState(0);
 
-  useEffect(() => {
-    const h = new Date().getHours();
-    if      (h < 12) setGreeting("Selamat Pagi");
-    else if (h < 15) setGreeting("Selamat Siang");
-    else if (h < 18) setGreeting("Selamat Sore");
-    else             setGreeting("Selamat Malam");
-  }, []);
-
   /* 4-phase breathing cycle: Tarik → Tahan → Hembuskan → Istirahat */
   useEffect(() => {
-    if (!isBreathing) { setPhaseIdx(0); return; }
-    setPhaseIdx(0);
+    if (!isBreathing) return;
     let idx = 0;
     const id = setInterval(() => {
       idx = (idx + 1) % BREATH_PHASES.length;
@@ -561,7 +558,12 @@ function TabHome({ userName, onOpenBot, challengeDone, setChallengeDone }: TabHo
         </AnimatePresence>
 
         <button
-          onClick={() => setIsBreathing(!isBreathing)}
+          onClick={() =>
+            setIsBreathing((prev) => {
+              setPhaseIdx(0);
+              return !prev;
+            })
+          }
           className={`px-7 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm ${
             isBreathing
               ? "bg-sage-50 text-muted border border-border hover:bg-sage-100"
@@ -815,7 +817,7 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
     const text = newPost.trim();
 
     // Optimistic: show immediately while Supabase inserts
-    const tempId = `temp-${Date.now()}`;
+    const tempId = `temp-${posts.length}-${text.slice(0, 12)}`;
     const optimistic: CommunityPostDisplay = {
       id:          tempId,
       user_id:     null,
