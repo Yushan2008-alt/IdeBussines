@@ -681,7 +681,7 @@ export default function RegisterPage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Terjadi kesalahan saat menghubungkan dengan Google. Silakan coba lagi atau daftar dengan email.";
+          : "Terjadi kesalahan saat menghubungkan dengan Google. Pastikan pop-up tidak diblokir, lalu coba lagi atau daftar dengan email.";
       setErrors({ full_name: mapOAuthErrorMessage(message) });
     } finally {
       setIsGoogleLoading(false);
