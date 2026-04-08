@@ -12,6 +12,22 @@ NEXT_PUBLIC_SITE_URL=...
 
 Tanpa dua variables `NEXT_PUBLIC_SUPABASE_*`, autentikasi tidak akan berjalan.
 
+### Opsional: Konfigurasi Bobot Mood (tanpa edit kode)
+
+Anda bisa tuning logika skoring mood dari environment variables:
+
+```bash
+NEXT_PUBLIC_MOOD_SCORE_MAP='{"kewalahan":1,"sedih":2.2,"biasa":3.4,"tenang":4.3,"damai":5}'
+NEXT_PUBLIC_MOOD_WEEKLY_RECENCY_WEIGHTS='[1.6,1.5,1.4,1.3,1.2,1.1,1]'
+NEXT_PUBLIC_MOOD_TREND_DELTA='0.6'
+```
+
+- `NEXT_PUBLIC_MOOD_SCORE_MAP`: bobot per mood (wajib lengkap 5 mood).
+- `NEXT_PUBLIC_MOOD_WEEKLY_RECENCY_WEIGHTS`: bobot recency 7 elemen, urutan dari 0 hari lalu sampai 6 hari lalu (index 0 = hari ini/0 hari lalu, index 1 = 1 hari lalu, ..., index 6 = 6 hari lalu).
+- `NEXT_PUBLIC_MOOD_TREND_DELTA`: ambang perubahan skor untuk menentukan tren membaik/menurun.
+
+Jika format tidak valid atau variabel tidak diisi, aplikasi otomatis memakai default internal.
+
 ## OAuth Google (Supabase)
 
 - Redirect aplikasi menggunakan callback internal: `/auth/callback`
