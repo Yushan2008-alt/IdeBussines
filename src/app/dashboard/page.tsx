@@ -11,15 +11,18 @@ import {
   ChevronRight, Video, User, Bell, Lock, LogOut, TrendingUp,
 } from "lucide-react";
 import type {
-  MoodId, SafetyPlan, BotMessage, Counselor,
+  MoodId, SafetyPlan, BotMessage, Counselor, Resource, DailyChallenge,
   CommunityPostDisplay, JournalEntryDisplay,
 } from "@/types/supabase";
 import { createClient } from "@/lib/supabase/client";
+import {
+  bookCounselorSession,
+  type BookingActionStatus,
+} from "@/lib/actions/booking";
 
 /* ══════════════════════════════════════════════════════════
-   MOCK DATA
-   These will be replaced with Supabase queries once the
-   backend is connected. See TODO comments in each component.
+   FALLBACK DATA
+   Used when Supabase data is unavailable.
 ══════════════════════════════════════════════════════════ */
 
 const HOTLINES = [
@@ -74,12 +77,6 @@ const MOOD_MESSAGES: Record<MoodId, string> = {
   damai:     "Sempurna. Energi indah ini akan menjadi kekuatanmu esok hari.",
 };
 
-// TODO: Connect to Supabase here — fetch from journal_entries table
-//   const { data } = await supabase
-//     .from("journal_entries")
-//     .select("*")
-//     .eq("user_id", session.user.id)
-//     .order("created_at", { ascending: false });
 const INITIAL_ENTRIES: JournalEntryDisplay[] = [
   {
     id:           "mock-1",
@@ -92,38 +89,39 @@ const INITIAL_ENTRIES: JournalEntryDisplay[] = [
   },
 ];
 
-// TODO: Connect to Supabase here — fetch community_posts with likes join
-//   const { data } = await supabase
-//     .from("community_posts")
-//     .select("*, community_likes(user_id)")
-//     .order("created_at", { ascending: false });
 const INITIAL_POSTS: CommunityPostDisplay[] = [
   { id: "mock-1", user_id: null, text: "Hari ini cukup berat, tapi aku berhasil bangun dari tempat tidur. Satu langkah kecil.", likes_count: 24, is_flagged: false, created_at: new Date().toISOString(), hasLiked: false, time: "1 jam lalu" },
   { id: "mock-2", user_id: null, text: "Terkadang bernapas perlahan benar-benar membantu menurunkan detak jantungku yang berpacu.", likes_count: 112, is_flagged: false, created_at: new Date().toISOString(), hasLiked: true, time: "3 jam lalu" },
 ];
 
-// TODO: Connect to Supabase here — fetch active bot_session for user
-//   const { data } = await supabase
-//     .from("bot_sessions")
-//     .select("messages")
-//     .eq("user_id", session.user.id)
-//     .order("created_at", { ascending: false })
-//     .limit(1)
-//     .single();
 const INITIAL_BOT_MSGS: BotMessage[] = [
   { role: "bot", text: "Halo, aku Teduh Bot. Ruang ini aman, rahasia, dan tanpa penghakiman. Ada yang ingin kamu sampaikan hari ini? 💚" },
 ];
 
-// TODO: Connect to Supabase here — fetch counselors table
-//   const { data } = await supabase
-//     .from("counselors")
-//     .select("*")
-//     .eq("is_verified", true)
-//     .neq("availability_status", "unavailable");
-const MOCK_EXPERTS: Counselor[] = [
+const FALLBACK_EXPERTS: Counselor[] = [
   { id: "c1", user_id: "u1", full_name: "Dr. Amanda Larasati",  title: "Psikolog Klinis Dewasa", specialization: "Adult psychology",  license_number: "SIPP-001", is_verified: true, availability_status: "available_today",    avatar_url: null },
   { id: "c2", user_id: "u2", full_name: "Bimo Setyawan, M.Psi", title: "Konselor Remaja",         specialization: "Youth counseling",  license_number: "SIPP-002", is_verified: true, availability_status: "available_tomorrow", avatar_url: null },
 ];
+
+const FALLBACK_RESOURCES: Resource[] = [
+  { id: "r1", title: "Memahami Lingkaran Burnout",  type: "article", read_time_minutes: 4, url: "#", thumbnail_url: null, created_at: new Date().toISOString() },
+  { id: "r2", title: "Teknik Grounding saat Panik", type: "video",   read_time_minutes: null, url: "#", thumbnail_url: null, created_at: new Date().toISOString() },
+];
+
+const FALLBACK_CHALLENGE: DailyChallenge = {
+  id: "fallback-challenge",
+  icon: "🌱",
+  text: "Minum segelas air putih perlahan-lahan. Rasakan setiap tegukannya melewati tenggorokanmu.",
+  date: new Date().toISOString().slice(0, 10),
+};
+
+const FALLBACK_AFFIRMATIONS = [
+  "Kamu sudah bertahan sejauh ini. Beristirahatlah jika lelah, rute hidup tak selamanya lurus.",
+  "Satu langkah kecil hari ini tetap berarti besar untuk dirimu yang esok.",
+  "Kamu tidak harus selalu kuat; cukup jujur pada perasaanmu hari ini.",
+] as const;
+
+const DEFAULT_READ_TIME_MINUTES = 3;
 
 const BREATH_PHASES = ["Tarik napas...", "Tahan...", "Hembuskan...", "Istirahat..."] as const;
 
@@ -230,6 +228,37 @@ export default function RuangTeduhApp() {
       if (botSession && Array.isArray(botSession.messages) && botSession.messages.length > 0) {
         setBotMessages(botSession.messages as BotMessage[]);
       }
+
+      // Fetch available counselors
+      const { data: counselors } = await supabase
+        .from("counselors")
+        .select("*")
+        .eq("is_verified", true)
+        .neq("availability_status", "unavailable")
+        .order("full_name", { ascending: true })
+        .limit(10);
+      if (counselors && counselors.length > 0) {
+        setCounselors(counselors);
+      }
+
+      // Fetch resources
+      const { data: resources } = await supabase
+        .from("resources")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (resources && resources.length > 0) {
+        setResources(resources);
+      }
+
+      // Fetch daily challenge
+      const today = new Date().toISOString().slice(0, 10);
+      const { data: challenge } = await supabase
+        .from("daily_challenges")
+        .select("*")
+        .eq("date", today)
+        .maybeSingle();
+      if (challenge) setDailyChallenge(challenge);
     };
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -246,6 +275,13 @@ export default function RuangTeduhApp() {
   const [botMessages,    setBotMessages]    = useState<BotMessage[]>(INITIAL_BOT_MSGS);
   const [challengeDone,  setChallengeDone]  = useState(false);
   const [safetyPlan,     setSafetyPlan]     = useState<SafetyPlan>({ warningSigns: "", coping: "", contacts: "" });
+  const [counselors,     setCounselors]     = useState<Counselor[]>(FALLBACK_EXPERTS);
+  const [resources,      setResources]      = useState<Resource[]>(FALLBACK_RESOURCES);
+  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge>(FALLBACK_CHALLENGE);
+  const [dailyAffirmation] = useState<{ text: string; author: string }>(() => ({
+    text: FALLBACK_AFFIRMATIONS[(new Date().getUTCDate() - 1) % FALLBACK_AFFIRMATIONS.length],
+    author: "Anonim",
+  }));
 
   return (
     <div className="bg-cream min-h-screen text-forest flex flex-col md:flex-row w-full">
@@ -325,6 +361,8 @@ export default function RuangTeduhApp() {
                 onOpenBot={() => setIsBotOpen(true)}
                 challengeDone={challengeDone}
                 setChallengeDone={setChallengeDone}
+                dailyChallenge={dailyChallenge}
+                dailyAffirmation={dailyAffirmation}
               />
             </motion.div>
           )}
@@ -340,7 +378,11 @@ export default function RuangTeduhApp() {
           )}
           {activeTab === "bantuan" && (
             <motion.div key="bantuan" variants={pageVariants} initial="initial" animate="animate" exit="exit">
-              <TabBantuan onOpenSafetyPlan={() => setIsSafetyPlanOpen(true)} />
+              <TabBantuan
+                onOpenSafetyPlan={() => setIsSafetyPlanOpen(true)}
+                counselors={counselors}
+                resources={resources}
+              />
             </motion.div>
           )}
           {activeTab === "profil" && (
@@ -424,9 +466,13 @@ interface TabHomeProps {
   onOpenBot:       () => void;
   challengeDone:   boolean;
   setChallengeDone: (v: boolean) => void;
+  dailyChallenge: DailyChallenge;
+  dailyAffirmation: { text: string; author: string };
 }
 
-function TabHome({ userName, onOpenBot, challengeDone, setChallengeDone }: TabHomeProps) {
+function TabHome({
+  userName, onOpenBot, challengeDone, setChallengeDone, dailyChallenge, dailyAffirmation,
+}: TabHomeProps) {
   const [greeting] = useState(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Selamat Pagi";
@@ -575,22 +621,15 @@ function TabHome({ userName, onOpenBot, challengeDone, setChallengeDone }: TabHo
       </div>
 
       {/* ── Micro Challenge ── */}
-      {/* TODO: Connect to Supabase here — fetch daily_challenges by today's date
-            const today = new Date().toISOString().slice(0, 10);
-            const { data } = await supabase
-              .from("daily_challenges")
-              .select("*")
-              .eq("date", today)
-              .single(); */}
       <div className="md:col-span-12 bg-white border border-border p-6 md:p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-5 shadow-[0_4px_20px_-8px_rgba(45,74,53,0.04)]">
         <div className="flex items-center gap-4 text-center md:text-left">
           <div className="w-14 h-14 bg-peach-50 rounded-[1.2rem] flex items-center justify-center text-peach-400 shrink-0 mx-auto md:mx-0 border border-peach-100">
-            <Sun className="w-7 h-7" />
+            <span className="text-2xl leading-none">{dailyChallenge.icon || "🌱"}</span>
           </div>
           <div>
             <h3 className="font-display font-semibold text-forest text-lg mb-0.5">Misi Kecil Hari Ini</h3>
             <p className="text-sm text-muted leading-relaxed max-w-md">
-              Minum segelas air putih perlahan-lahan. Rasakan setiap tegukannya melewati tenggorokanmu.
+              {dailyChallenge.text}
             </p>
           </div>
         </div>
@@ -628,8 +667,6 @@ function TabHome({ userName, onOpenBot, challengeDone, setChallengeDone }: TabHo
       </motion.div>
 
       {/* ── Afirmasi ── */}
-      {/* TODO: Connect to Supabase here — rotate daily affirmation from resources table
-            or generate via Claude API for personalized affirmation */}
       <div className="md:col-span-5 bg-peach-50 p-8 rounded-[2.5rem] relative overflow-hidden border border-peach-100 shadow-[0_4px_20px_-8px_rgba(232,170,132,0.12)]">
         <Quote className="w-20 h-20 text-peach-200 absolute -top-4 -right-4 rotate-12 pointer-events-none" />
         <div className="flex items-center gap-2 mb-4 text-peach-400 relative z-10">
@@ -637,9 +674,9 @@ function TabHome({ userName, onOpenBot, challengeDone, setChallengeDone }: TabHo
           <p className="font-bold text-xs uppercase tracking-widest">Afirmasi Hari Ini</p>
         </div>
         <p className="font-display text-forest font-semibold leading-relaxed relative z-10 text-[15px] italic">
-          &ldquo;Kamu sudah bertahan sejauh ini. Beristirahatlah jika lelah, rute hidup tak selamanya lurus.&rdquo;
+          &ldquo;{dailyAffirmation.text}&rdquo;
         </p>
-        <p className="text-muted text-xs mt-4 font-semibold tracking-wide uppercase relative z-10">&mdash; Anonim</p>
+        <p className="text-muted text-xs mt-4 font-semibold tracking-wide uppercase relative z-10">&mdash; {dailyAffirmation.author}</p>
       </div>
     </div>
   );
@@ -741,7 +778,6 @@ function TabJurnal({ entries, setEntries }: TabJurnalProps) {
       </div>
 
       {/* Journal entries */}
-      {/* TODO: Connect to Supabase here — fetch from journal_entries, decrypt text */}
       <h3 className="font-semibold text-muted text-sm uppercase tracking-widest px-2">Catatan Perjalananmu</h3>
       <div className="space-y-4">
         {entries.map((entry, i) => {
@@ -782,6 +818,43 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
   const supabase = createClient();
   const [newPost, setNewPost] = useState("");
   const tempPostCounterRef = useRef(0);
+
+  useEffect(() => {
+    const realtimeClient = createClient();
+    const channel = realtimeClient
+      .channel("community_posts_live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "community_posts" },
+        (payload) => {
+          const inserted = payload.new as {
+            id: string;
+            user_id: string | null;
+            text: string;
+            likes_count: number;
+            is_flagged: boolean;
+            created_at: string;
+          };
+          if (inserted.is_flagged) return;
+          setPosts((prev) => {
+            if (prev.some((p) => p.id === inserted.id)) return prev;
+            return [
+              {
+                ...inserted,
+                hasLiked: false,
+                time: formatRelativeTime(inserted.created_at),
+              },
+              ...prev,
+            ];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      realtimeClient.removeChannel(channel);
+    };
+  }, [setPosts]);
 
   const toggleLike = async (id: string) => {
     // Optimistic UI update immediately
@@ -888,10 +961,6 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
       </div>
 
       {/* Posts */}
-      {/* TODO: Connect to Supabase here — fetch community_posts with real-time subscription
-            const channel = supabase.channel("community_posts")
-              .on("postgres_changes", { event: "INSERT", schema: "public", table: "community_posts" }, handleNewPost)
-              .subscribe(); */}
       <div className="space-y-4">
         {posts.map((post, i) => (
           <motion.div
@@ -927,7 +996,48 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
 /* ══════════════════════════════════════════════════════════
    TAB: BANTUAN
 ══════════════════════════════════════════════════════════ */
-function TabBantuan({ onOpenSafetyPlan }: { onOpenSafetyPlan: () => void }) {
+interface TabBantuanProps {
+  onOpenSafetyPlan: () => void;
+  counselors: Counselor[];
+  resources: Resource[];
+}
+
+interface BookingStatus {
+  kind: BookingActionStatus;
+  message: string;
+}
+
+function TabBantuan({ onOpenSafetyPlan, counselors, resources }: TabBantuanProps) {
+  const [isBooking, setIsBooking] = useState<string | null>(null);
+  const [bookingStatus, setBookingStatus] = useState<BookingStatus | null>(null);
+
+  const displayedResources = resources.slice(0, 2);
+
+  const handleBook = async (counselorId: string) => {
+    if (isBooking) {
+      setBookingStatus({
+        kind: "info",
+        message: "Permintaan booking sedang diproses.",
+      });
+      return;
+    }
+
+    setIsBooking(counselorId);
+    setBookingStatus(null);
+
+    try {
+      const result = await bookCounselorSession(counselorId);
+      setBookingStatus(result);
+    } catch {
+      setBookingStatus({
+        kind: "error",
+        message: "Terjadi gangguan tak terduga. Coba lagi beberapa saat.",
+      });
+    } finally {
+      setIsBooking(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
 
@@ -952,7 +1062,6 @@ function TabBantuan({ onOpenSafetyPlan }: { onOpenSafetyPlan: () => void }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
         {/* Konsultasi Profesional */}
-        {/* TODO: Connect to Supabase here — fetch counselors, enable booking */}
         <div className="bg-white border border-border p-8 rounded-[2.5rem] shadow-[0_4px_20px_-8px_rgba(45,74,53,0.04)]">
           <div className="w-[52px] h-[52px] bg-sage-100 rounded-[1.2rem] flex items-center justify-center mb-5 border border-sage-200">
             <UserPlus className="w-6 h-6 text-sage-600" />
@@ -961,7 +1070,7 @@ function TabBantuan({ onOpenSafetyPlan }: { onOpenSafetyPlan: () => void }) {
           <p className="text-muted text-sm mb-5 leading-relaxed">Terhubung dengan profesional kesehatan mental berlisensi.</p>
 
           <div className="space-y-3">
-            {MOCK_EXPERTS.map((ex) => (
+            {counselors.map((ex) => (
               <motion.div
                 key={ex.id}
                 whileHover={{ x: 3 }}
@@ -971,19 +1080,45 @@ function TabBantuan({ onOpenSafetyPlan }: { onOpenSafetyPlan: () => void }) {
                   <p className="font-semibold text-sm text-forest">{ex.full_name}</p>
                   <p className="text-xs text-muted mt-0.5">{ex.title}</p>
                 </div>
-                <span className="text-[10px] font-bold text-sage-700 bg-sage-100 border border-sage-200 px-3 py-1.5 rounded-full whitespace-nowrap">
-                  {ex.availability_status === "available_today" ? "Tersedia Hari Ini" : "Tersedia Besok"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-sage-700 bg-sage-100 border border-sage-200 px-3 py-1.5 rounded-full whitespace-nowrap">
+                    {ex.availability_status === "available_today" ? "Tersedia Hari Ini" : "Tersedia Besok"}
+                  </span>
+                  <button
+                    onClick={() => handleBook(ex.id)}
+                    disabled={Boolean(isBooking)}
+                    className="text-[11px] font-bold bg-sage-500 hover:bg-sage-600 disabled:bg-muted-light text-white px-3 py-1.5 rounded-full transition-colors"
+                  >
+                    {isBooking === ex.id ? "Memesan..." : "Booking"}
+                  </button>
+                </div>
               </motion.div>
             ))}
+            {counselors.length === 0 && (
+              <p className="text-sm text-muted">Belum ada konselor tersedia saat ini.</p>
+            )}
           </div>
+          {bookingStatus && (
+            <p
+              role="status"
+              aria-live="polite"
+              className={`text-xs mt-3 font-medium ${
+                bookingStatus.kind === "success"
+                  ? "text-sage-700"
+                  : bookingStatus.kind === "error"
+                    ? "text-peach-500"
+                    : "text-muted"
+              }`}
+            >
+              {bookingStatus.message}
+            </p>
+          )}
           <button className="w-full mt-5 bg-sage-50 text-sage-700 font-semibold text-sm py-3.5 rounded-full hover:bg-sage-100 transition-colors border border-sage-200">
             Telusuri Direktori Terapis
           </button>
         </div>
 
         {/* Resource Library */}
-        {/* TODO: Connect to Supabase here — fetch resources table */}
         <div className="bg-white border border-border p-8 rounded-[2.5rem] shadow-[0_4px_20px_-8px_rgba(45,74,53,0.04)]">
           <div className="w-[52px] h-[52px] bg-peach-50 rounded-[1.2rem] flex items-center justify-center mb-5 border border-peach-100">
             <FileText className="w-6 h-6 text-peach-400" />
@@ -992,31 +1127,36 @@ function TabBantuan({ onOpenSafetyPlan }: { onOpenSafetyPlan: () => void }) {
           <p className="text-muted text-sm mb-5 leading-relaxed">Artikel ilmiah kurasi psikolog serta panduan interaktif.</p>
 
           <div className="space-y-3">
-            {[
-              { title: "Memahami Lingkaran Burnout",  read: "4 Min", isVid: false },
-              { title: "Teknik Grounding saat Panik", read: "Video",  isVid: true  },
-            ].map((res, idx) => (
+            {displayedResources.map((res) => (
               <motion.div
-                key={idx}
+                key={res.id}
                 whileHover={{ x: 3 }}
                 className="p-4 rounded-[1.5rem] bg-peach-50 border border-peach-100 hover:bg-white hover:shadow-sm hover:border-border transition-all flex justify-between items-center cursor-pointer"
               >
                 <p className="font-semibold text-sm text-forest flex-1">{res.title}</p>
-                {res.isVid ? (
+                {res.type === "video" ? (
                   <div className="bg-peach-100 p-1.5 rounded-full shrink-0 ml-2">
                     <Video className="w-4 h-4 text-peach-500" />
                   </div>
                 ) : (
                   <span className="text-[10px] text-peach-500 font-bold bg-peach-100 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 ml-2">
-                    {res.read} Baca
+                    {(res.read_time_minutes ?? DEFAULT_READ_TIME_MINUTES)} Min. Baca
                   </span>
                 )}
               </motion.div>
             ))}
+            {displayedResources.length === 0 && (
+              <p className="text-sm text-muted">Belum ada materi tersedia.</p>
+            )}
           </div>
-          <button className="w-full mt-5 bg-peach-50 text-peach-500 font-semibold text-sm py-3.5 rounded-full hover:bg-peach-100 transition-colors border border-peach-100">
-            Lihat Semua Materi
-          </button>
+          <a
+            href={displayedResources[0]?.url ?? "#"}
+            target={displayedResources[0]?.url ? "_blank" : undefined}
+            rel="noreferrer"
+            className="w-full mt-5 bg-peach-50 text-peach-500 font-semibold text-sm py-3.5 rounded-full hover:bg-peach-100 transition-colors border border-peach-100 block text-center"
+          >
+            Buka Materi Terbaru
+          </a>
         </div>
       </div>
     </div>
