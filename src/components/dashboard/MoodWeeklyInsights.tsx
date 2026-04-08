@@ -47,6 +47,14 @@ const MOOD_LABEL_MAP: Record<MoodId, string> = {
   damai: "Damai",
 };
 
+const MOOD_TOOLTIP_LABEL = "Mood";
+const MOOD_THRESHOLDS = {
+  kewalahan: 1.5,
+  sedih: 2.5,
+  biasa: 3.5,
+  tenang: 4.5,
+} as const;
+
 const EMOTIONAL_SUGGESTION: Record<MoodId, string> = {
   kewalahan: "Minggu ini terasa berat. Coba ambil jeda 5 menit untuk tarik napas perlahan dan pilih satu hal kecil yang paling bisa kamu selesaikan hari ini.",
   sedih: "Aku menangkap ada rasa sedih yang dominan. Beri ruang untuk perasaanmu, lalu coba hubungi orang yang kamu percaya agar kamu tidak memikulnya sendirian.",
@@ -63,10 +71,10 @@ function toDayKey(date: Date): string {
 }
 
 function moodFromScore(score: number): MoodId {
-  if (score <= 1.5) return "kewalahan";
-  if (score <= 2.5) return "sedih";
-  if (score <= 3.5) return "biasa";
-  if (score <= 4.5) return "tenang";
+  if (score <= MOOD_THRESHOLDS.kewalahan) return "kewalahan";
+  if (score <= MOOD_THRESHOLDS.sedih) return "sedih";
+  if (score <= MOOD_THRESHOLDS.biasa) return "biasa";
+  if (score <= MOOD_THRESHOLDS.tenang) return "tenang";
   return "damai";
 }
 
@@ -226,8 +234,8 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
               />
               <Tooltip
                 formatter={(value: number | null) => {
-                  if (typeof value !== "number") return ["Belum ada data", "Mood"];
-                  return [`Skor ${value.toFixed(2)}`, "Mood"];
+                  if (typeof value !== "number") return ["Belum ada data", MOOD_TOOLTIP_LABEL];
+                  return [`Skor ${value.toFixed(2)}`, MOOD_TOOLTIP_LABEL];
                 }}
                 labelFormatter={(_label, payload: Array<{ payload: ChartPoint }>) => payload?.[0]?.payload?.fullDate ?? ""}
                 contentStyle={{ borderRadius: "14px", borderColor: "#DDE8DD" }}
