@@ -79,8 +79,8 @@ function trendDirection(points: ChartPoint[]): "membaik" | "menurun" | "stabil" 
   if (withData.length < 2) return "stabil";
   const first = withData[0].score ?? 0;
   const last = withData[withData.length - 1].score ?? 0;
-  if (last - first >= moodScoringConfig.trendSignificantDelta) return "membaik";
-  if (first - last >= moodScoringConfig.trendSignificantDelta) return "menurun";
+  if (last - first >= moodScoringConfig.trendDeltaThreshold) return "membaik";
+  if (first - last >= moodScoringConfig.trendDeltaThreshold) return "menurun";
   return "stabil";
 }
 

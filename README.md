@@ -23,7 +23,7 @@ NEXT_PUBLIC_MOOD_TREND_DELTA='0.6'
 ```
 
 - `NEXT_PUBLIC_MOOD_SCORE_MAP`: bobot per mood (wajib lengkap 5 mood).
-- `NEXT_PUBLIC_MOOD_WEEKLY_RECENCY_WEIGHTS`: bobot recency 7 elemen, urutan dari 0 hari lalu sampai 6 hari lalu (index 0 = hari ini/0 hari lalu, index 6 = 6 hari lalu).
+- `NEXT_PUBLIC_MOOD_WEEKLY_RECENCY_WEIGHTS`: bobot recency 7 elemen, urutan dari 0 hari lalu sampai 6 hari lalu (index 0 = hari ini/0 hari lalu, index 1 = 1 hari lalu, ..., index 6 = 6 hari lalu).
 - `NEXT_PUBLIC_MOOD_TREND_DELTA`: ambang perubahan skor untuk menentukan tren membaik/menurun.
 
 Jika format tidak valid atau variabel tidak diisi, aplikasi otomatis memakai default internal.

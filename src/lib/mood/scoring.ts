@@ -82,7 +82,7 @@ export interface MoodScoringConfig {
   moodScoreMap: Record<MoodId, number>;
   moodThresholds: MoodThresholds;
   weeklyRecencyWeightByDaysAgo: number[];
-  trendSignificantDelta: number;
+  trendDeltaThreshold: number;
 }
 
 export function loadMoodScoringConfigFromEnv(): MoodScoringConfig {
@@ -91,7 +91,7 @@ export function loadMoodScoringConfigFromEnv(): MoodScoringConfig {
     moodScoreMap,
     moodThresholds: buildMoodThresholds(moodScoreMap),
     weeklyRecencyWeightByDaysAgo: parseRecencyWeights(process.env.NEXT_PUBLIC_MOOD_WEEKLY_RECENCY_WEIGHTS),
-    trendSignificantDelta: parseTrendSignificantDelta(process.env.NEXT_PUBLIC_MOOD_TREND_DELTA),
+    trendDeltaThreshold: parseTrendSignificantDelta(process.env.NEXT_PUBLIC_MOOD_TREND_DELTA),
   };
 }
 
