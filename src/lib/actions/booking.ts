@@ -123,7 +123,6 @@ export async function bookCounselorSession(counselorId: string): Promise<Booking
     type: "session_reminder",
     message: `Booking konsultasi dengan ${counselor.full_name} berhasil dibuat.`,
     is_read: false,
-    created_at: new Date().toISOString(),
   });
   if (notifError) {
     console.error("[session notification insert]", notifError.message);
