@@ -95,3 +95,4 @@ export function loadMoodScoringConfigFromEnv(): MoodScoringConfig {
   };
 }
 
+export const moodScoringConfig = loadMoodScoringConfigFromEnv();
