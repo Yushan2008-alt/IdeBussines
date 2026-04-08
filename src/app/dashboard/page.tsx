@@ -15,6 +15,10 @@ import type {
   CommunityPostDisplay, JournalEntryDisplay,
 } from "@/types/supabase";
 import { createClient } from "@/lib/supabase/client";
+import {
+  bookCounselorSession,
+  type BookingActionStatus,
+} from "@/lib/actions/booking";
 
 /* ══════════════════════════════════════════════════════════
    FALLBACK DATA
@@ -119,7 +123,6 @@ const FALLBACK_AFFIRMATIONS = [
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const DEFAULT_BOOKING_OFFSET_DAYS = 1;
 const DEFAULT_READ_TIME_MINUTES = 3;
 
 const BREATH_PHASES = ["Tarik napas...", "Tahan...", "Hembuskan...", "Istirahat..."] as const;
@@ -381,7 +384,6 @@ export default function RuangTeduhApp() {
                 onOpenSafetyPlan={() => setIsSafetyPlanOpen(true)}
                 counselors={counselors}
                 resources={resources}
-                currentUserId={currentUserId}
               />
             </motion.div>
           )}
@@ -1000,29 +1002,20 @@ interface TabBantuanProps {
   onOpenSafetyPlan: () => void;
   counselors: Counselor[];
   resources: Resource[];
-  currentUserId: string | null;
 }
 
 interface BookingStatus {
-  kind: "success" | "error" | "info";
+  kind: BookingActionStatus;
   message: string;
 }
 
-function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: TabBantuanProps) {
-  const supabase = createClient();
+function TabBantuan({ onOpenSafetyPlan, counselors, resources }: TabBantuanProps) {
   const [isBooking, setIsBooking] = useState<string | null>(null);
   const [bookingStatus, setBookingStatus] = useState<BookingStatus | null>(null);
 
   const displayedResources = resources.slice(0, 2);
 
   const handleBook = async (counselorId: string) => {
-    if (!currentUserId) {
-      setBookingStatus({
-        kind: "error",
-        message: "Sesi akunmu berakhir. Muat ulang halaman lalu coba lagi.",
-      });
-      return;
-    }
     if (!UUID_PATTERN.test(counselorId)) {
       setBookingStatus({
         kind: "info",
@@ -1042,114 +1035,8 @@ function TabBantuan({ onOpenSafetyPlan, counselors, resources, currentUserId }: 
     setBookingStatus(null);
 
     try {
-      const { data: counselor, error: counselorError } = await supabase
-        .from("counselors")
-        .select("id, full_name, is_verified, availability_status")
-        .eq("id", counselorId)
-        .maybeSingle();
-
-      if (counselorError || !counselor) {
-        setBookingStatus({
-          kind: "error",
-          message: "Data konselor tidak ditemukan. Coba pilih konselor lain.",
-        });
-        return;
-      }
-
-      if (!counselor.is_verified || counselor.availability_status === "unavailable") {
-        setBookingStatus({
-          kind: "info",
-          message: "Konselor sedang tidak tersedia. Silakan pilih jadwal/konselor lain.",
-        });
-        return;
-      }
-
-      const { data: activeBookings, error: activeBookingError } = await supabase
-        .from("sessions")
-        .select("id, scheduled_at, status")
-        .eq("user_id", currentUserId)
-        .eq("counselor_id", counselorId)
-        .in("status", ["pending", "confirmed"])
-        .gte("scheduled_at", new Date().toISOString())
-        .order("scheduled_at", { ascending: true })
-        .limit(1);
-
-      if (activeBookingError) {
-        setBookingStatus({
-          kind: "error",
-          message: "Gagal memeriksa booking aktif. Coba lagi beberapa saat.",
-        });
-        return;
-      }
-
-      if ((activeBookings ?? []).length > 0) {
-        const nextSession = activeBookings?.[0];
-        const nextDate = nextSession
-          ? new Date(nextSession.scheduled_at).toLocaleString("id-ID", {
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "";
-        setBookingStatus({
-          kind: "info",
-          message: nextDate
-            ? `Kamu sudah punya booking aktif pada ${nextDate}.`
-            : "Kamu sudah punya booking aktif untuk konselor ini.",
-        });
-        return;
-      }
-
-      const scheduledDate = new Date();
-      if (counselor.availability_status === "available_today") {
-        scheduledDate.setHours(scheduledDate.getHours() + 2);
-      } else {
-        scheduledDate.setDate(scheduledDate.getDate() + DEFAULT_BOOKING_OFFSET_DAYS);
-      }
-
-      const scheduledAt = scheduledDate.toISOString();
-      const { data: insertedSession, error: insertError } = await supabase
-        .from("sessions")
-        .insert({
-          user_id: currentUserId,
-          counselor_id: counselorId,
-          scheduled_at: scheduledAt,
-          status: "pending",
-          notes: null,
-        })
-        .select("scheduled_at")
-        .single();
-
-      if (insertError) {
-        setBookingStatus({
-          kind: "error",
-          message: "Booking gagal dibuat. Coba lagi beberapa saat.",
-        });
-        return;
-      }
-
-      const { error: notifError } = await supabase.from("notifications").insert({
-        user_id: currentUserId,
-        type: "session_reminder",
-        message: `Booking konsultasi dengan ${counselor.full_name} berhasil dibuat.`,
-        is_read: false,
-        created_at: new Date().toISOString(),
-      });
-      if (notifError) {
-        console.error("[session notification insert]", notifError.message);
-      }
-
-      const bookedAt = new Date(insertedSession.scheduled_at).toLocaleString("id-ID", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      setBookingStatus({
-        kind: "success",
-        message: `Booking terkirim. Estimasi sesi: ${bookedAt}.`,
-      });
+      const result = await bookCounselorSession(counselorId);
+      setBookingStatus(result);
     } catch {
       setBookingStatus({
         kind: "error",
