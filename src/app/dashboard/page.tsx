@@ -19,6 +19,7 @@ import {
   bookCounselorSession,
   type BookingActionStatus,
 } from "@/lib/actions/booking";
+import MoodWeeklyInsights from "@/components/dashboard/MoodWeeklyInsights";
 
 /* ══════════════════════════════════════════════════════════
    FALLBACK DATA
@@ -358,6 +359,7 @@ export default function RuangTeduhApp() {
             <motion.div key="home" variants={pageVariants} initial="initial" animate="animate" exit="exit">
               <TabHome
                 userName={currentUserName}
+                userId={currentUserId}
                 onOpenBot={() => setIsBotOpen(true)}
                 challengeDone={challengeDone}
                 setChallengeDone={setChallengeDone}
@@ -463,6 +465,7 @@ function NavItem({ id, icon: Icon, label, active, onClick }: NavItemProps) {
 ══════════════════════════════════════════════════════════ */
 interface TabHomeProps {
   userName:        string;
+  userId:          string | null;
   onOpenBot:       () => void;
   challengeDone:   boolean;
   setChallengeDone: (v: boolean) => void;
@@ -471,7 +474,7 @@ interface TabHomeProps {
 }
 
 function TabHome({
-  userName, onOpenBot, challengeDone, setChallengeDone, dailyChallenge, dailyAffirmation,
+  userName, userId, onOpenBot, challengeDone, setChallengeDone, dailyChallenge, dailyAffirmation,
 }: TabHomeProps) {
   const [greeting] = useState(() => {
     const hour = new Date().getHours();
@@ -481,6 +484,7 @@ function TabHome({
     return "Selamat Malam";
   });
   const [selectedMood, setSelectedMood] = useState<MoodId | null>(null);
+  const [moodRefreshTick, setMoodRefreshTick] = useState(0);
   const [isBreathing,  setIsBreathing]  = useState(false);
   const [phaseIdx,     setPhaseIdx]     = useState(0);
 
@@ -511,7 +515,11 @@ function TabHome({
         note:       null,
         created_at: new Date().toISOString(),
       }).then(({ error }) => {
-        if (error) console.error("[mood insert]", error.message);
+        if (error) {
+          console.error("[mood insert]", error.message);
+          return;
+        }
+        setMoodRefreshTick((prev) => prev + 1);
       });
     }
   };
@@ -619,6 +627,8 @@ function TabHome({
           {isBreathing ? "Hentikan" : "Mulai Bernapas"}
         </button>
       </div>
+
+      <MoodWeeklyInsights userId={userId} refreshTick={moodRefreshTick} />
 
       {/* ── Micro Challenge ── */}
       <div className="md:col-span-12 bg-white border border-border p-6 md:p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-5 shadow-[0_4px_20px_-8px_rgba(45,74,53,0.04)]">
