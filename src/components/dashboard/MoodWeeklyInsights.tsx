@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import type { NameType, Payload, ValueType } from "recharts/types/component/DefaultTooltipContent";
 import { createClient } from "@/lib/supabase/client";
+import { loadMoodScoringConfigFromEnv } from "@/lib/mood/scoring";
 import type { MoodId } from "@/types/supabase";
 
 interface MoodWeeklyInsightsProps {
@@ -32,13 +33,8 @@ interface ChartPoint {
   moodLabel: string;
 }
 
-const MOOD_SCORE_MAP: Record<MoodId, number> = {
-  kewalahan: 1,
-  sedih: 2.2,
-  biasa: 3.4,
-  tenang: 4.3,
-  damai: 5,
-};
+const MOOD_SCORING_CONFIG = loadMoodScoringConfigFromEnv();
+const { moodScoreMap: MOOD_SCORE_MAP, moodThresholds: MOOD_THRESHOLDS } = MOOD_SCORING_CONFIG;
 
 const MOOD_LABEL_MAP: Record<MoodId, string> = {
   kewalahan: "Kewalahan",
@@ -50,16 +46,6 @@ const MOOD_LABEL_MAP: Record<MoodId, string> = {
 
 const MOOD_TOOLTIP_LABEL_ID = "Mood";
 const MS_PER_DAY = 86400000;
-const TREND_SIGNIFICANT_DELTA = 0.6;
-
-const MOOD_THRESHOLDS = {
-  kewalahan: (MOOD_SCORE_MAP.kewalahan + MOOD_SCORE_MAP.sedih) / 2,
-  sedih: (MOOD_SCORE_MAP.sedih + MOOD_SCORE_MAP.biasa) / 2,
-  biasa: (MOOD_SCORE_MAP.biasa + MOOD_SCORE_MAP.tenang) / 2,
-  tenang: (MOOD_SCORE_MAP.tenang + MOOD_SCORE_MAP.damai) / 2,
-} as const;
-
-const WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO = [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1] as const;
 
 const EMOTIONAL_SUGGESTION: Record<MoodId, string> = {
   kewalahan: "Minggu ini terasa berat. Coba ambil jeda 5 menit untuk tarik napas perlahan dan pilih satu hal kecil yang paling bisa kamu selesaikan hari ini.",
@@ -94,8 +80,8 @@ function trendDirection(points: ChartPoint[]): "membaik" | "menurun" | "stabil" 
   if (withData.length < 2) return "stabil";
   const first = withData[0].score ?? 0;
   const last = withData[withData.length - 1].score ?? 0;
-  if (last - first >= TREND_SIGNIFICANT_DELTA) return "membaik";
-  if (first - last >= TREND_SIGNIFICANT_DELTA) return "menurun";
+  if (last - first >= MOOD_SCORING_CONFIG.trendSignificantDelta) return "membaik";
+  if (first - last >= MOOD_SCORING_CONFIG.trendSignificantDelta) return "menurun";
   return "stabil";
 }
 
@@ -107,8 +93,8 @@ function getRecencyWeight(createdAtIso: string): number {
   today.setHours(0, 0, 0, 0);
 
   const diffInDays = Math.floor((today.getTime() - entryDate.getTime()) / MS_PER_DAY);
-  if (diffInDays < 0 || diffInDays >= WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO.length) return 1;
-  return WEEKLY_RECENCY_WEIGHT_BY_DAYS_AGO[diffInDays];
+  if (diffInDays < 0 || diffInDays >= MOOD_SCORING_CONFIG.weeklyRecencyWeightByDaysAgo.length) return 1;
+  return MOOD_SCORING_CONFIG.weeklyRecencyWeightByDaysAgo[diffInDays];
 }
 
 function extractNumericValue(value: ValueType | undefined): number | null {
