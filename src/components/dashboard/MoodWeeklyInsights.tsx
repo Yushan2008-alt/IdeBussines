@@ -183,10 +183,15 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
         return { score, weight };
       });
 
-      const weightedScoreTotal = weighted.reduce((sum, item) => sum + (item.score * item.weight), 0);
-      const weightedWeightTotal = weighted.reduce((sum, item) => sum + item.weight, 0);
-      const averageScore = weightedWeightTotal > 0
-        ? weightedScoreTotal / weightedWeightTotal
+      const weightedTotals = weighted.reduce(
+        (totals, item) => ({
+          score: totals.score + (item.score * item.weight),
+          weight: totals.weight + item.weight,
+        }),
+        { score: 0, weight: 0 },
+      );
+      const averageScore = weightedTotals.weight > 0
+        ? weightedTotals.score / weightedTotals.weight
         : null;
 
       if (averageScore === null) {
