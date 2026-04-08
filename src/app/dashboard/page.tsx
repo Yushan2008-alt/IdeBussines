@@ -781,6 +781,7 @@ interface TabRuangCeritaProps {
 function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
   const supabase = createClient();
   const [newPost, setNewPost] = useState("");
+  const tempPostCounterRef = useRef(0);
 
   const toggleLike = async (id: string) => {
     // Optimistic UI update immediately
@@ -817,7 +818,8 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
     const text = newPost.trim();
 
     // Optimistic: show immediately while Supabase inserts
-    const tempId = `temp-${posts.length}-${text.slice(0, 12)}`;
+    tempPostCounterRef.current += 1;
+    const tempId = `temp-${tempPostCounterRef.current}`;
     const optimistic: CommunityPostDisplay = {
       id:          tempId,
       user_id:     null,

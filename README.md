@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Environment Wajib (Supabase)
 
-Tambahkan environment variable berikut di lokal dan Vercel:
+Tambahkan environment variables berikut di lokal dan Vercel:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=...
@@ -10,7 +10,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 NEXT_PUBLIC_SITE_URL=...
 ```
 
-Tanpa dua variable `NEXT_PUBLIC_SUPABASE_*`, autentikasi tidak akan berjalan.
+Tanpa dua variables `NEXT_PUBLIC_SUPABASE_*`, autentikasi tidak akan berjalan.
 
 ## OAuth Google (Supabase)
 
