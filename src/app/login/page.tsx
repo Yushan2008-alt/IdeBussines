@@ -8,7 +8,7 @@ import {
   Eye, EyeOff, Mail, Lock, Sprout, ArrowRight, AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { mapGoogleOAuthErrorMessage } from "@/lib/auth/oauth";
+import { mapOAuthErrorMessage } from "@/lib/auth/oauth";
 
 /* ══════════════════════════════════════════════════════════
    TYPES
@@ -89,10 +89,10 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
       });
-      if (oauthError) setError(mapGoogleOAuthErrorMessage(oauthError.message));
+      if (oauthError) setError(mapOAuthErrorMessage(oauthError.message));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Terjadi kesalahan tidak terduga.";
-      setError(mapGoogleOAuthErrorMessage(message));
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan saat menghubungkan dengan Google.";
+      setError(mapOAuthErrorMessage(message));
     } finally {
       setIsGoogleLoading(false);
     }
