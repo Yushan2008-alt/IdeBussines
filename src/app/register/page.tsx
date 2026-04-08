@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -563,7 +562,6 @@ const stepVariants = {
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════ */
 export default function RegisterPage() {
-  const router   = useRouter();
   const supabase = createClient();
 
   const [step,      setStep]      = useState(1);
@@ -618,7 +616,7 @@ export default function RegisterPage() {
       password: form.password,
       options: {
         data: { full_name: form.full_name },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     });
 
@@ -665,7 +663,7 @@ export default function RegisterPage() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     });
     if (oauthError) setErrors({ full_name: oauthError.message });
