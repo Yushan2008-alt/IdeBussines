@@ -1,5 +1,23 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Wajib (Supabase)
+
+Tambahkan environment variables berikut di lokal dan Vercel:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_SITE_URL=...
+```
+
+Tanpa dua variables `NEXT_PUBLIC_SUPABASE_*`, autentikasi tidak akan berjalan.
+
+## OAuth Google (Supabase)
+
+- Redirect aplikasi menggunakan callback internal: `/auth/callback`
+- URL callback aplikasi yang dipakai saat OAuth: `https://<domain-anda>/auth/callback?next=/dashboard`
+- Pastikan **Site URL** dan **Additional Redirect URLs** di Supabase Auth sudah mengizinkan domain Vercel Anda.
+
 ## Getting Started
 
 First, run the development server:
