@@ -225,7 +225,10 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
                 tick={{ fill: "#6B7280", fontSize: 12 }}
               />
               <Tooltip
-                formatter={(value: number) => [`Skor ${value.toFixed(2)}`, "Mood"]}
+                formatter={(value: number | null) => {
+                  if (typeof value !== "number") return ["Belum ada data", "Mood"];
+                  return [`Skor ${value.toFixed(2)}`, "Mood"];
+                }}
                 labelFormatter={(_label, payload: Array<{ payload: ChartPoint }>) => payload?.[0]?.payload?.fullDate ?? ""}
                 contentStyle={{ borderRadius: "14px", borderColor: "#DDE8DD" }}
               />
