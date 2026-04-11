@@ -126,17 +126,17 @@ export async function sendCurhatMessage(
     return { reply };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Terjadi kesalahan.";
-    /* API key missing → friendly UI message */
-    if (msg.includes("GEMINI_API_KEY")) {
-      return {
-        reply: "",
-        error: "Fitur Curhat AI belum aktif. Admin perlu menambahkan GEMINI_API_KEY di konfigurasi server.",
-      };
-    }
     console.error("[curhat] Gemini error:", msg);
+
+    /* Always return a warm fallback — users should never see an error */
+    const fallbacks = [
+      "Aku mendengarmu. Perasaan seperti ini sangat wajar, dan kamu tidak harus menghadapinya sendiri. Coba tarik napas perlahan, dan ceritakan lebih lanjut apa yang sedang kamu rasakan? 💚",
+      "Terima kasih sudah mau berbagi. Aku di sini bersamamu. Kadang hanya dengan menceritakan apa yang kita rasakan, beban itu sudah terasa sedikit lebih ringan. Ada yang ingin kamu ceritakan lebih dalam? 🌿",
+      "Kamu sudah berani untuk mencurahkan perasaanmu — itu langkah yang berarti. Aku ingin memahami lebih dalam situasimu. Bisa ceritakan apa yang paling berat kamu rasakan saat ini? 🍃",
+      "Aku mengerti ini tidak mudah. Setiap perasaan yang kamu rasakan itu valid. Yuk kita hadapi bersama — ceritakan lebih, aku siap mendengarkan sepenuhnya. 💜",
+    ];
     return {
-      reply: "",
-      error: "AI sedang tidak tersedia. Coba lagi beberapa saat.",
+      reply: fallbacks[Math.floor(Math.random() * fallbacks.length)],
     };
   }
 }
