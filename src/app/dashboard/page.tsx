@@ -24,6 +24,7 @@ import { WeeklyMoodChart } from "@/components/mood/WeeklyMoodChart";
 import { MoodCalendarChart } from "@/components/mood/MoodCalendarChart";
 import { CurhatModal } from "@/components/mood/CurhatModal";
 import { getWeeklyMoodStats, getCalendarWeekStats } from "@/lib/actions/mood";
+import { sendTeduhBotMessage } from "@/lib/actions/teduhbot";
 import type { WeeklyStats } from "@/lib/utils/mood-insights";
 import { useMoodStore } from "@/store/mood";
 
@@ -1540,57 +1541,42 @@ interface TeduhBotModalProps {
 }
 
 function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModalProps) {
-  const supabase  = createClient();
-  const [inp,     setInp]     = useState("");
+  const supabase   = createClient();
+  const [inp,      setInp]      = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isOpen]);
+  }, [messages, isTyping, isOpen]);
 
   const saveBotSession = async (updatedMessages: BotMessage[], userId: string) => {
-    // Upsert bot session into Supabase — store last active session
     await supabase.from("bot_sessions").upsert(
-      {
-        user_id:    userId,
-        messages:   updatedMessages,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
+      { user_id: userId, messages: updatedMessages, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" },
     );
   };
 
   const onSend = async () => {
     if (!inp.trim() || isTyping) return;
-    const userMsg = inp.trim();
+    const userMsg   = inp.trim();
     const userEntry: BotMessage = { role: "user", text: userMsg, created_at: new Date().toISOString() };
-    const withUser = [...messages, userEntry];
+    const withUser  = [...messages, userEntry];
 
     setMessages(withUser);
     setInp("");
     setIsTyping(true);
 
-    // Call Teduh Bot via Supabase Edge Function (when deployed)
-    // Falls back to a compassionate canned response during development
-    let botText = "Mendengar ceritamu mengingatkanku betapa tangguhnya dirimu. Jangan lupa bernapas perlahan ya. Aku selalu menemani di sini. 💚";
+    /* Call Gemini via server action — passes conversation history for multi-turn */
+    const { reply } = await sendTeduhBotMessage(userMsg, withUser.slice(0, -1));
 
-    try {
-      const { data, error } = await supabase.functions.invoke("teduh-bot", {
-        body: { messages: withUser },
-      });
-      if (!error && data?.reply) botText = data.reply;
-    } catch {
-      // Edge function not yet deployed — use fallback response
-    }
-
-    const botEntry: BotMessage = { role: "bot", text: botText, created_at: new Date().toISOString() };
+    const botEntry: BotMessage = { role: "bot", text: reply, created_at: new Date().toISOString() };
     const final = [...withUser, botEntry];
 
     setMessages(final);
     setIsTyping(false);
 
-    // Persist session to Supabase
+    /* Persist session to Supabase (fire-and-forget) */
     const { data: { user } } = await supabase.auth.getUser();
     if (user) saveBotSession(final, user.id);
   };
@@ -1611,17 +1597,19 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
             className="relative w-full max-w-md bg-cream h-[88vh] md:h-[640px] md:rounded-[2.5rem] rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-border"
           >
-            {/* Bot header */}
+            {/* ── Bot header ── */}
             <div className="bg-white p-5 border-b border-border flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-lavender-100 rounded-2xl flex items-center justify-center">
+                <div className="w-11 h-11 bg-lavender-100 rounded-2xl flex items-center justify-center relative">
                   <Sparkles className="w-5 h-5 text-lavender-500" />
+                  {/* Gemini indicator dot */}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#4285F4] rounded-full border-2 border-white" title="Powered by Gemini" />
                 </div>
                 <div>
                   <h3 className="font-display font-semibold text-forest text-base">Teduh Bot</h3>
-                  <p className="text-[10px] text-sage-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sage-400 inline-block animate-pulse" />
-                    Menyertaimu
+                  <p className="text-[10px] text-[#4285F4] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4] inline-block animate-pulse" />
+                    Gemini · Menyertaimu
                   </p>
                 </div>
               </div>
@@ -1633,7 +1621,7 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
               </button>
             </div>
 
-            {/* Messages */}
+            {/* ── Messages ── */}
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
               <AnimatePresence initial={false}>
                 {messages.map((m, i) => (
@@ -1660,7 +1648,8 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
                     </div>
                   </motion.div>
                 ))}
-                {/* Typing indicator */}
+
+                {/* ── Typing indicator ── */}
                 {isTyping && (
                   <motion.div
                     key="typing"
@@ -1673,12 +1662,12 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
                       <Sprout className="w-3.5 h-3.5 text-sage-500" />
                     </div>
                     <div className="bg-white text-forest rounded-[1.5rem] rounded-bl-lg border border-border p-4 shadow-sm flex items-center gap-1">
-                      {[0, 1, 2].map((i) => (
+                      {[0, 1, 2].map((dot) => (
                         <motion.span
-                          key={i}
-                          className="w-2 h-2 bg-sage-300 rounded-full block"
+                          key={dot}
+                          className="w-2 h-2 bg-lavender-300 rounded-full block"
                           animate={{ y: [0, -5, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.18 }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: dot * 0.18 }}
                         />
                       ))}
                     </div>
@@ -1688,7 +1677,7 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
               <div ref={endRef} />
             </div>
 
-            {/* Input */}
+            {/* ── Input ── */}
             <div className="p-4 bg-white border-t border-border shrink-0">
               <div className="bg-sage-50 rounded-2xl p-1.5 flex border border-border focus-within:ring-2 focus-within:ring-sage-200 transition-all">
                 <input
@@ -1696,17 +1685,22 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
                   placeholder="Ketik apa yang kamu rasakan..."
                   value={inp}
                   onChange={(e) => setInp(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && onSend()}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) onSend(); }}
+                  disabled={isTyping}
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onSend}
-                  className="bg-sage-500 hover:bg-sage-600 text-white w-11 h-11 flex items-center justify-center rounded-xl shrink-0 transition-colors shadow-sm"
+                  disabled={isTyping || !inp.trim()}
+                  className="bg-sage-500 hover:bg-sage-600 disabled:bg-sage-200 text-white w-11 h-11 flex items-center justify-center rounded-xl shrink-0 transition-colors shadow-sm"
                 >
                   <Send className="w-4 h-4" />
                 </motion.button>
               </div>
+              <p className="text-[10px] text-center text-muted-light mt-1.5">
+                Dijawab oleh Gemini AI · Ruang aman & rahasia
+              </p>
             </div>
           </motion.div>
         </div>
