@@ -379,7 +379,7 @@ export default function RuangTeduhApp() {
               <TabHome
                 userName={currentUserName}
                 userId={currentUserId}
-                onOpenBot={() => setIsBotOpen(true)}
+                onOpenBot={() => setIsCurhatOpen(true)}
                 challengeDone={challengeDone}
                 setChallengeDone={setChallengeDone}
                 dailyChallenge={dailyChallenge}
