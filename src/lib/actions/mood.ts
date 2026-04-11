@@ -7,6 +7,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { MoodId } from "@/types/supabase";
+import { buildWeeklyStats, type WeeklyStats } from "@/lib/utils/mood-insights";
 
 /* ─── Insert a new mood entry ──────────────────────────── */
 export async function insertMoodEntry(moodId: MoodId, note?: string) {
@@ -52,6 +53,36 @@ export async function getMoodEntries(limit = 30) {
 
   if (error) return { data: [], error: error.message };
   return { data: data ?? [], error: null };
+}
+
+/* ─── Get weekly mood statistics (last 7 days) ─────────── */
+export async function getWeeklyMoodStats(): Promise<{ data: WeeklyStats | null; error: string | null }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { data: null, error: "Tidak terautentikasi." };
+
+  const since = new Date();
+  since.setDate(since.getDate() - 6);
+  since.setHours(0, 0, 0, 0);
+
+  const { data, error } = await supabase
+    .from("mood_entries")
+    .select("mood_id, created_at")
+    .eq("user_id", user.id)
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: true });
+
+  if (error) return { data: null, error: error.message };
+
+  const stats = buildWeeklyStats(
+    (data ?? []) as { mood_id: MoodId; created_at: string }[],
+  );
+
+  return { data: stats, error: null };
 }
 
 /* ─── Get mood streak (consecutive days with entry) ────── */
