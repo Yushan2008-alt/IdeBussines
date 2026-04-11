@@ -419,28 +419,9 @@ export default function RuangTeduhApp() {
         </AnimatePresence>
       </main>
 
-      {/* ── Floating Teduh Bot Button ── */}
-      <AnimatePresence>
-        {!isBotOpen && (
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => setIsBotOpen(true)}
-            className="fixed bottom-24 md:bottom-10 right-5 md:right-10 w-[60px] h-[60px] bg-lavender-400 hover:bg-lavender-500 rounded-full flex items-center justify-center shadow-[0_8px_32px_-8px_rgba(165,145,204,0.6)] text-white z-30 ring-4 ring-lavender-100 transition-colors"
-            aria-label="Buka Teduh Bot"
-          >
-            <Sparkles className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-peach-400 rounded-full border-2 border-white animate-pulse" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
       {/* ── Floating Curhat AI Button ── */}
       <AnimatePresence>
-        {!isCurhatOpen && !isBotOpen && (
+        {!isCurhatOpen && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -448,10 +429,11 @@ export default function RuangTeduhApp() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => setIsCurhatOpen(true)}
-            className="fixed bottom-24 md:bottom-10 right-20 md:right-28 w-[52px] h-[52px] bg-sage-600 hover:bg-sage-700 rounded-full flex items-center justify-center shadow-[0_8px_32px_-8px_rgba(90,125,97,0.5)] text-white z-30 ring-4 ring-sage-100 transition-colors"
+            className="fixed bottom-24 md:bottom-10 right-5 md:right-10 w-[60px] h-[60px] bg-lavender-400 hover:bg-lavender-500 rounded-full flex items-center justify-center shadow-[0_8px_32px_-8px_rgba(165,145,204,0.6)] text-white z-30 ring-4 ring-lavender-100 transition-colors"
             aria-label="Curhat dengan AI"
           >
-            <Brain className="w-5 h-5" />
+            <HeartHandshake className="w-6 h-6" />
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-peach-400 rounded-full border-2 border-white animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
