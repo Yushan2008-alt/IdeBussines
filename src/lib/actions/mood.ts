@@ -7,7 +7,13 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { MoodId } from "@/types/supabase";
-import { buildWeeklyStats, type WeeklyStats } from "@/lib/utils/mood-insights";
+import {
+  buildWeeklyStats,
+  buildCalendarWeekStats,
+  type WeeklyStats,
+  type CalendarWeekStats,
+} from "@/lib/utils/mood-insights";
+import { startOfWeek, endOfWeek } from "date-fns";
 
 /* ─── Insert a new mood entry ──────────────────────────── */
 export async function insertMoodEntry(moodId: MoodId, note?: string) {
@@ -80,6 +86,48 @@ export async function getWeeklyMoodStats(): Promise<{ data: WeeklyStats | null; 
 
   const stats = buildWeeklyStats(
     (data ?? []) as { mood_id: MoodId; created_at: string }[],
+  );
+
+  return { data: stats, error: null };
+}
+
+/* ─── Get calendar-week mood statistics (Mon–Sun) ───────── */
+/**
+ * Fetches mood entries for the current ISO calendar week (Monday → Sunday)
+ * and returns CalendarWeekStats for the ComposedChart & Gemini context.
+ *
+ * Timezone: Supabase stores in UTC.  We query from Monday 00:00 local →
+ * Sunday 23:59 local by converting to UTC ISO strings.
+ */
+export async function getCalendarWeekStats(): Promise<{
+  data: CalendarWeekStats | null;
+  error: string | null;
+}> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { data: null, error: "Tidak terautentikasi." };
+
+  const now       = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday 00:00 local
+  const weekEnd   = endOfWeek(now, { weekStartsOn: 1 });   // Sunday 23:59 local
+
+  const { data, error } = await supabase
+    .from("mood_entries")
+    .select("mood_id, created_at")
+    .eq("user_id", user.id)
+    .gte("created_at", weekStart.toISOString())
+    .lte("created_at", weekEnd.toISOString())
+    .order("created_at", { ascending: true });
+
+  if (error) return { data: null, error: error.message };
+
+  const stats = buildCalendarWeekStats(
+    (data ?? []) as { mood_id: MoodId; created_at: string }[],
+    now,
   );
 
   return { data: stats, error: null };
