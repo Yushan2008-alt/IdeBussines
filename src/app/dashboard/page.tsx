@@ -20,6 +20,9 @@ import {
   type BookingActionStatus,
 } from "@/lib/actions/booking";
 import MoodWeeklyInsights from "@/components/dashboard/MoodWeeklyInsights";
+import { WeeklyMoodChart } from "@/components/mood/WeeklyMoodChart";
+import { getWeeklyMoodStats } from "@/lib/actions/mood";
+import type { WeeklyStats } from "@/lib/utils/mood-insights";
 
 /* ══════════════════════════════════════════════════════════
    FALLBACK DATA
@@ -218,6 +221,10 @@ export default function RuangTeduhApp() {
         .maybeSingle();
       if (plan) setSafetyPlan(plan as SafetyPlan);
 
+      // Fetch weekly mood statistics
+      const { data: stats } = await getWeeklyMoodStats();
+      if (stats) setWeeklyStats(stats);
+
       // Fetch bot session
       const { data: botSession } = await supabase
         .from("bot_sessions")
@@ -283,6 +290,7 @@ export default function RuangTeduhApp() {
     text: FALLBACK_AFFIRMATIONS[(new Date().getUTCDate() - 1) % FALLBACK_AFFIRMATIONS.length],
     author: "Anonim",
   }));
+  const [weeklyStats,    setWeeklyStats]    = useState<WeeklyStats | null>(null);
 
   return (
     <div className="bg-cream min-h-screen text-forest flex flex-col md:flex-row w-full">
@@ -370,7 +378,7 @@ export default function RuangTeduhApp() {
           )}
           {activeTab === "jurnal" && (
             <motion.div key="jurnal" variants={pageVariants} initial="initial" animate="animate" exit="exit">
-              <TabJurnal entries={journalEntries} setEntries={setJournalEntries} />
+              <TabJurnal entries={journalEntries} setEntries={setJournalEntries} weeklyStats={weeklyStats} />
             </motion.div>
           )}
           {activeTab === "ruang-cerita" && (
@@ -464,12 +472,12 @@ function NavItem({ id, icon: Icon, label, active, onClick }: NavItemProps) {
    TAB: HOME
 ══════════════════════════════════════════════════════════ */
 interface TabHomeProps {
-  userName:        string;
-  userId:          string | null;
-  onOpenBot:       () => void;
-  challengeDone:   boolean;
+  userName:         string;
+  userId:           string | null;
+  onOpenBot:        () => void;
+  challengeDone:    boolean;
   setChallengeDone: (v: boolean) => void;
-  dailyChallenge: DailyChallenge;
+  dailyChallenge:   DailyChallenge;
   dailyAffirmation: { text: string; author: string };
 }
 
@@ -696,11 +704,12 @@ function TabHome({
    TAB: JURNAL
 ══════════════════════════════════════════════════════════ */
 interface TabJurnalProps {
-  entries:    JournalEntryDisplay[];
-  setEntries: React.Dispatch<React.SetStateAction<JournalEntryDisplay[]>>;
+  entries:     JournalEntryDisplay[];
+  setEntries:  React.Dispatch<React.SetStateAction<JournalEntryDisplay[]>>;
+  weeklyStats?: WeeklyStats | null;
 }
 
-function TabJurnal({ entries, setEntries }: TabJurnalProps) {
+function TabJurnal({ entries, setEntries, weeklyStats }: TabJurnalProps) {
   const supabase = createClient();
   const [journalText, setJournalText] = useState("");
   const [isSaving,    setIsSaving]    = useState(false);
@@ -757,6 +766,9 @@ function TabJurnal({ entries, setEntries }: TabJurnalProps) {
 
   return (
     <div className="space-y-6">
+      {/* ── Weekly Mood Chart ── */}
+      {weeklyStats && <WeeklyMoodChart stats={weeklyStats} />}
+
       {/* Write area */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-border shadow-[0_4px_20px_-8px_rgba(45,74,53,0.05)]">
         <h2 className="font-display text-2xl font-semibold text-forest mb-1">Tuliskan Bebanmu.</h2>
