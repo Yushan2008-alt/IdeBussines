@@ -8,7 +8,7 @@ import {
   Meh, Smile, Sun, Quote, Heart, Sprout, Home,
   Book, MessageCircle, ShieldCheck, Send, CheckCircle,
   UserPlus, FileText, HeartHandshake, ListChecks, Activity, Users,
-  ChevronRight, Video, User, Bell, Lock, LogOut, TrendingUp,
+  ChevronRight, Video, User, Bell, Lock, LogOut, TrendingUp, Brain,
 } from "lucide-react";
 import type {
   MoodId, SafetyPlan, BotMessage, Counselor, Resource, DailyChallenge,
@@ -21,8 +21,11 @@ import {
 } from "@/lib/actions/booking";
 import MoodWeeklyInsights from "@/components/dashboard/MoodWeeklyInsights";
 import { WeeklyMoodChart } from "@/components/mood/WeeklyMoodChart";
-import { getWeeklyMoodStats } from "@/lib/actions/mood";
+import { MoodCalendarChart } from "@/components/mood/MoodCalendarChart";
+import { CurhatModal } from "@/components/mood/CurhatModal";
+import { getWeeklyMoodStats, getCalendarWeekStats } from "@/lib/actions/mood";
 import type { WeeklyStats } from "@/lib/utils/mood-insights";
+import { useMoodStore } from "@/store/mood";
 
 /* ══════════════════════════════════════════════════════════
    FALLBACK DATA
@@ -221,9 +224,13 @@ export default function RuangTeduhApp() {
         .maybeSingle();
       if (plan) setSafetyPlan(plan as SafetyPlan);
 
-      // Fetch weekly mood statistics
+      // Fetch weekly mood statistics (rolling 7-day, for AreaChart)
       const { data: stats } = await getWeeklyMoodStats();
       if (stats) setWeeklyStats(stats);
+
+      // Fetch calendar-week stats (Mon–Sun, timezone-safe, for ComposedChart + Gemini)
+      const { data: calStats } = await getCalendarWeekStats();
+      if (calStats) setCalendarStats(calStats);
 
       // Fetch bot session
       const { data: botSession } = await supabase
@@ -272,9 +279,12 @@ export default function RuangTeduhApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { setCalendarStats } = useMoodStore();
+
   const [activeTab,        setActiveTab]        = useState("home");
   const [isSOSOpen,        setIsSOSOpen]        = useState(false);
   const [isBotOpen,        setIsBotOpen]        = useState(false);
+  const [isCurhatOpen,     setIsCurhatOpen]     = useState(false);
   const [isSafetyPlanOpen, setIsSafetyPlanOpen] = useState(false);
 
   /* Lifted states — persisted across tab switches */
@@ -378,7 +388,7 @@ export default function RuangTeduhApp() {
           )}
           {activeTab === "jurnal" && (
             <motion.div key="jurnal" variants={pageVariants} initial="initial" animate="animate" exit="exit">
-              <TabJurnal entries={journalEntries} setEntries={setJournalEntries} weeklyStats={weeklyStats} />
+              <TabJurnal entries={journalEntries} setEntries={setJournalEntries} weeklyStats={weeklyStats} onOpenCurhat={() => setIsCurhatOpen(true)} />
             </motion.div>
           )}
           {activeTab === "ruang-cerita" && (
@@ -427,10 +437,29 @@ export default function RuangTeduhApp() {
         )}
       </AnimatePresence>
 
+      {/* ── Floating Curhat AI Button ── */}
+      <AnimatePresence>
+        {!isCurhatOpen && !isBotOpen && (
+          <motion.button
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setIsCurhatOpen(true)}
+            className="fixed bottom-24 md:bottom-10 right-20 md:right-28 w-[52px] h-[52px] bg-sage-600 hover:bg-sage-700 rounded-full flex items-center justify-center shadow-[0_8px_32px_-8px_rgba(90,125,97,0.5)] text-white z-30 ring-4 ring-sage-100 transition-colors"
+            aria-label="Curhat dengan AI"
+          >
+            <Brain className="w-5 h-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* ── Modals ── */}
       <SOSModal        isOpen={isSOSOpen}        onClose={() => setIsSOSOpen(false)} />
       <TeduhBotModal   isOpen={isBotOpen}         onClose={() => setIsBotOpen(false)}        messages={botMessages}    setMessages={setBotMessages} />
       <SafetyPlanModal isOpen={isSafetyPlanOpen} onClose={() => setIsSafetyPlanOpen(false)} plan={safetyPlan}         setPlan={setSafetyPlan} />
+      <CurhatModal     isOpen={isCurhatOpen}     onClose={() => setIsCurhatOpen(false)} />
     </div>
   );
 }
@@ -704,12 +733,14 @@ function TabHome({
    TAB: JURNAL
 ══════════════════════════════════════════════════════════ */
 interface TabJurnalProps {
-  entries:     JournalEntryDisplay[];
-  setEntries:  React.Dispatch<React.SetStateAction<JournalEntryDisplay[]>>;
-  weeklyStats?: WeeklyStats | null;
+  entries:          JournalEntryDisplay[];
+  setEntries:       React.Dispatch<React.SetStateAction<JournalEntryDisplay[]>>;
+  weeklyStats?:     WeeklyStats | null;
+  onOpenCurhat?:    () => void;
 }
 
-function TabJurnal({ entries, setEntries, weeklyStats }: TabJurnalProps) {
+function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnalProps) {
+  const { calendarStats } = useMoodStore();
   const supabase = createClient();
   const [journalText, setJournalText] = useState("");
   const [isSaving,    setIsSaving]    = useState(false);
@@ -766,8 +797,30 @@ function TabJurnal({ entries, setEntries, weeklyStats }: TabJurnalProps) {
 
   return (
     <div className="space-y-6">
-      {/* ── Weekly Mood Chart ── */}
-      {weeklyStats && <WeeklyMoodChart stats={weeklyStats} />}
+      {/* ── Mood Calendar Chart (Mon–Sun, ComposedChart) ── */}
+      {calendarStats && <MoodCalendarChart stats={calendarStats} />}
+
+      {/* ── Fallback to AreaChart if calendar data not yet loaded ── */}
+      {!calendarStats && weeklyStats && <WeeklyMoodChart stats={weeklyStats} />}
+
+      {/* ── Curhat dengan AI Advisor card ── */}
+      <motion.div
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={onOpenCurhat}
+        className="cursor-pointer bg-gradient-to-r from-[#F4F8F5] to-[#F3EEFB] border border-[#E2EDE3] rounded-2xl px-5 py-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow"
+      >
+        <div className="w-11 h-11 rounded-2xl bg-[#5A7D61] flex items-center justify-center shrink-0 shadow-[0_4px_12px_-4px_rgba(90,125,97,0.4)]">
+          <Brain className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[#2D4A35]">Curhat dengan AI Advisor</p>
+          <p className="text-xs text-[#8B9E8F] mt-0.5 truncate">
+            Ceritakan masalahmu — AI akan analisis berdasarkan tren mood-mu
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-[#8B9E8F] shrink-0" />
+      </motion.div>
 
       {/* Write area */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-border shadow-[0_4px_20px_-8px_rgba(45,74,53,0.05)]">
