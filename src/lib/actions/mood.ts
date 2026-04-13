@@ -13,7 +13,7 @@ import {
   type WeeklyStats,
   type CalendarWeekStats,
 } from "@/lib/utils/mood-insights";
-import { startOfWeek, endOfWeek } from "date-fns";
+import { endOfWeek, parseISO, startOfWeek } from "date-fns";
 
 /* ─── Insert a new mood entry ──────────────────────────── */
 export async function insertMoodEntry(moodId: MoodId, note?: string) {
@@ -99,7 +99,16 @@ export async function getWeeklyMoodStats(): Promise<{ data: WeeklyStats | null; 
  * Timezone: Supabase stores in UTC.  We query from Monday 00:00 local →
  * Sunday 23:59 local by converting to UTC ISO strings.
  */
-export async function getCalendarWeekStats(): Promise<{
+interface CalendarWeekRangeParams {
+  /** ISO timestamp from client-local Monday 00:00 converted to UTC string */
+  weekStartIso?: string;
+  /** ISO timestamp from client-local Sunday 23:59 converted to UTC string */
+  weekEndIso?: string;
+  /** ISO timestamp representing "now" in client timezone context */
+  nowIso?: string;
+}
+
+export async function getCalendarWeekStats(params?: CalendarWeekRangeParams): Promise<{
   data: CalendarWeekStats | null;
   error: string | null;
 }> {
@@ -111,9 +120,11 @@ export async function getCalendarWeekStats(): Promise<{
 
   if (!user) return { data: null, error: "Tidak terautentikasi." };
 
-  const now       = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday 00:00 local
-  const weekEnd   = endOfWeek(now, { weekStartsOn: 1 });   // Sunday 23:59 local
+  const now = params?.nowIso ? parseISO(params.nowIso) : new Date();
+  const fallbackWeekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday 00:00 local
+  const fallbackWeekEnd   = endOfWeek(now, { weekStartsOn: 1 });   // Sunday 23:59 local
+  const weekStart = params?.weekStartIso ? parseISO(params.weekStartIso) : fallbackWeekStart;
+  const weekEnd   = params?.weekEndIso ? parseISO(params.weekEndIso) : fallbackWeekEnd;
 
   const { data, error } = await supabase
     .from("mood_entries")

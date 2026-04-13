@@ -145,7 +145,7 @@ export async function sendCurhatMessage(
 
 /**
  * Auto-generates a 2–3 sentence "Overall Mood Minggu Ini" summary using Gemini.
- * Called on page load when totalEntries >= 3.
+ * Called on page load when weekly data is complete (minimum 7 hari).
  * Falls back silently to the rule-based `insight` string on any error.
  */
 export async function generateOverallSummary(
@@ -156,10 +156,10 @@ export async function generateOverallSummary(
    * data sudah terkumpul minimal 7 hari."
    * We enforce this by requiring:
    *  – at least 7 total entries in the week (≈ 1 entry/day),  AND
-   *  – data recorded on at least 3 distinct days (avoids gaming via bulk-logging one day).
+   *  – data recorded on all 7 distinct days in the current calendar week.
    */
   const daysWithData = stats.days.filter((d) => d.count > 0).length;
-  if (stats.totalEntries < 7 || daysWithData < 3) {
+  if (stats.totalEntries < 7 || daysWithData < 7) {
     return { summary: stats.insight };
   }
 
