@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { endOfWeek, startOfWeek } from "date-fns";
 import {
   Phone, Wind, Sparkles, X, CloudRain, Frown,
   Meh, Smile, Sun, Quote, Heart, Sprout, Home,
@@ -150,6 +151,21 @@ function formatDisplayDate(iso: string): string {
 }
 function formatRelativeTime(iso: string): string { return formatDisplayDate(iso); }
 
+/**
+ * Builds week boundaries from the user's local timezone, then serializes them
+ * to UTC ISO strings for server actions so Monday–Sunday mapping stays aligned
+ * between client display and server-side Supabase filtering.
+ */
+function getClientCalendarWeekRange(baseDate: Date = new Date()) {
+  const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(baseDate, { weekStartsOn: 1 });
+  return {
+    weekStartIso: weekStart.toISOString(),
+    weekEndIso: weekEnd.toISOString(),
+    nowIso: baseDate.toISOString(),
+  };
+}
+
 /* ─── Tab transition variants ─── */
 const pageVariants = {
   initial: { opacity: 0, y: 14 },
@@ -163,6 +179,7 @@ const pageVariants = {
 export default function RuangTeduhApp() {
   const supabase = createClient();
   const router   = useRouter();
+  const { setCalendarStats, setStatsLoading } = useMoodStore();
 
   /* ── Auth state ── */
   const [currentUserName, setCurrentUserName] = useState("Pengguna");
@@ -231,7 +248,7 @@ export default function RuangTeduhApp() {
 
       // Fetch calendar-week stats (Mon–Sun, timezone-safe, for ComposedChart + Gemini)
       setStatsLoading(true);
-      const { data: calStats } = await getCalendarWeekStats();
+      const { data: calStats } = await getCalendarWeekStats(getClientCalendarWeekRange());
       if (calStats) setCalendarStats(calStats);
       setStatsLoading(false);
 
@@ -282,7 +299,46 @@ export default function RuangTeduhApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { setCalendarStats, setStatsLoading } = useMoodStore();
+  useEffect(() => {
+    if (!currentUserId) return;
+    const realtimeClient = createClient();
+    const channel = realtimeClient
+      .channel(`mood_entries_${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "mood_entries",
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        async () => {
+          try {
+            const { data: stats, error: weeklyError } = await getWeeklyMoodStats();
+            if (weeklyError) {
+              console.error("[mood weekly refresh]", weeklyError);
+            } else if (stats) {
+              setWeeklyStats(stats);
+            }
+
+            setStatsLoading(true);
+            const { data: calStats, error: calError } = await getCalendarWeekStats(getClientCalendarWeekRange());
+            if (calError) {
+              console.error("[mood calendar refresh]", calError);
+            } else if (calStats) {
+              setCalendarStats(calStats);
+            }
+          } finally {
+            setStatsLoading(false);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [currentUserId, setCalendarStats, setStatsLoading]);
 
   const [activeTab,        setActiveTab]        = useState("home");
   const [isSOSOpen,        setIsSOSOpen]        = useState(false);
@@ -552,7 +608,7 @@ function TabHome({
     setMoodRefreshTick((prev) => prev + 1);
 
     // 5. Sync real calendar stats from server (confirms optimistic data)
-    const { data: calStats } = await getCalendarWeekStats();
+    const { data: calStats } = await getCalendarWeekStats(getClientCalendarWeekRange());
     if (calStats) setCalendarStats(calStats);
   };
 

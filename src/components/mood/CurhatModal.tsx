@@ -125,9 +125,9 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
   /* Generate overall summary once on first open (if data available) */
   useEffect(() => {
     if (!isOpen || overallSummary !== null || !calendarStats) return;
-    /* Mirror the gate in generateOverallSummary: ≥7 entries on ≥3 distinct days */
+    /* Mirror the gate in generateOverallSummary: ≥7 entries on 7 distinct days */
     const daysWithData = calendarStats.days.filter((d) => d.count > 0).length;
-    if (calendarStats.totalEntries < 7 || daysWithData < 3) return;
+    if (calendarStats.totalEntries < 7 || daysWithData < 7) return;
 
     setSummaryLoading(true);
     generateOverallSummary(calendarStats).then(({ summary }) => {
