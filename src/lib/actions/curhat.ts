@@ -151,7 +151,15 @@ export async function sendCurhatMessage(
 export async function generateOverallSummary(
   stats: CalendarWeekStats,
 ): Promise<{ summary: string; error?: string }> {
-  if (stats.totalEntries < 3) {
+  /*
+   * PRD requirement: "Generate analisis mingguan secara otomatis hanya jika
+   * data sudah terkumpul minimal 7 hari."
+   * We enforce this by requiring:
+   *  – at least 7 total entries in the week (≈ 1 entry/day),  AND
+   *  – data recorded on at least 3 distinct days (avoids gaming via bulk-logging one day).
+   */
+  const daysWithData = stats.days.filter((d) => d.count > 0).length;
+  if (stats.totalEntries < 7 || daysWithData < 3) {
     return { summary: stats.insight };
   }
 

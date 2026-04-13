@@ -247,7 +247,18 @@ export default function MoodWeeklyInsights({ userId, refreshTick }: MoodWeeklyIn
 
       <div className="h-[240px] rounded-3xl bg-sage-50/60 border border-sage-100 p-3 md:p-4">
         {isLoading ? (
-          <div className="h-full flex items-center justify-center text-sm text-muted">Memuat grafik mood...</div>
+          /* Animated skeleton bars — one per day of the week */
+          <div className="h-full flex items-end gap-1.5 pb-2 px-2">
+            {[38, 62, 28, 78, 52, 68, 44].map((h, i) => (
+              <motion.div
+                key={i}
+                className="flex-1 rounded-t-md bg-sage-200/70"
+                style={{ height: `${h}%` }}
+                animate={{ opacity: [0.35, 0.75, 0.35] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
+              />
+            ))}
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 8, right: 10, left: -16, bottom: 0 }}>

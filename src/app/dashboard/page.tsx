@@ -23,7 +23,7 @@ import MoodWeeklyInsights from "@/components/dashboard/MoodWeeklyInsights";
 import { WeeklyMoodChart } from "@/components/mood/WeeklyMoodChart";
 import { MoodCalendarChart } from "@/components/mood/MoodCalendarChart";
 import { CurhatModal } from "@/components/mood/CurhatModal";
-import { getWeeklyMoodStats, getCalendarWeekStats } from "@/lib/actions/mood";
+import { insertMoodEntry, getWeeklyMoodStats, getCalendarWeekStats } from "@/lib/actions/mood";
 import { sendTeduhBotMessage } from "@/lib/actions/teduhbot";
 import type { WeeklyStats } from "@/lib/utils/mood-insights";
 import { useMoodStore } from "@/store/mood";
@@ -230,8 +230,10 @@ export default function RuangTeduhApp() {
       if (stats) setWeeklyStats(stats);
 
       // Fetch calendar-week stats (Mon–Sun, timezone-safe, for ComposedChart + Gemini)
+      setStatsLoading(true);
       const { data: calStats } = await getCalendarWeekStats();
       if (calStats) setCalendarStats(calStats);
+      setStatsLoading(false);
 
       // Fetch bot session
       const { data: botSession } = await supabase
@@ -280,7 +282,7 @@ export default function RuangTeduhApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { setCalendarStats } = useMoodStore();
+  const { setCalendarStats, setStatsLoading } = useMoodStore();
 
   const [activeTab,        setActiveTab]        = useState("home");
   const [isSOSOpen,        setIsSOSOpen]        = useState(false);
@@ -503,10 +505,13 @@ function TabHome({
     if (hour < 18) return "Selamat Sore";
     return "Selamat Malam";
   });
-  const [selectedMood, setSelectedMood] = useState<MoodId | null>(null);
+  const { optimisticAddEntry, setCalendarStats } = useMoodStore();
+
+  const [selectedMood,    setSelectedMood]    = useState<MoodId | null>(null);
   const [moodRefreshTick, setMoodRefreshTick] = useState(0);
-  const [isBreathing,  setIsBreathing]  = useState(false);
-  const [phaseIdx,     setPhaseIdx]     = useState(0);
+  const [isBreathing,     setIsBreathing]     = useState(false);
+  const [phaseIdx,        setPhaseIdx]        = useState(0);
+  const [toastMsg,        setToastMsg]        = useState<string | null>(null);
 
   /* 4-phase breathing cycle: Tarik → Tahan → Hembuskan → Istirahat */
   useEffect(() => {
@@ -525,23 +530,30 @@ function TabHome({
   const handleMoodSelect = async (moodId: MoodId) => {
     setSelectedMood(moodId);
 
-    // Insert mood entry into Supabase — fire-and-forget (non-blocking UI)
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      supabase.from("mood_entries").insert({
-        user_id:    user.id,
-        mood_id:    moodId,
-        note:       null,
-        created_at: new Date().toISOString(),
-      }).then(({ error }) => {
-        if (error) {
-          console.error("[mood insert]", error.message);
-          return;
-        }
-        setMoodRefreshTick((prev) => prev + 1);
-      });
+    // 1. Snapshot current store state for rollback on failure
+    const snapshot = useMoodStore.getState().calendarStats;
+
+    // 2. Optimistic update — chart bar rises INSTANTLY before server responds
+    optimisticAddEntry(moodId);
+
+    // 3. Server-side insert via server action (auth handled server-side)
+    const result = await insertMoodEntry(moodId);
+
+    if (result?.error) {
+      // Rollback optimistic update and show friendly toast
+      if (snapshot) setCalendarStats(snapshot);
+      setToastMsg("Gagal menyimpan mood. Periksa koneksi dan coba lagi. 💙");
+      setTimeout(() => setToastMsg(null), 3500);
+      console.error("[mood insert]", result.error);
+      return;
     }
+
+    // 4. Trigger MoodWeeklyInsights refresh
+    setMoodRefreshTick((prev) => prev + 1);
+
+    // 5. Sync real calendar stats from server (confirms optimistic data)
+    const { data: calStats } = await getCalendarWeekStats();
+    if (calStats) setCalendarStats(calStats);
   };
 
   return (
@@ -677,6 +689,22 @@ function TabHome({
         </motion.button>
       </div>
 
+      {/* ── Toast notification (mood save error) ── */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            key="mood-toast"
+            initial={{ opacity: 0, y: 16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0,  scale: 1 }}
+            exit={{   opacity: 0, y: 16, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="md:col-span-12 bg-peach-50 border border-peach-200 text-peach-600 rounded-2xl px-5 py-3.5 text-sm font-medium text-center shadow-sm"
+          >
+            {toastMsg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Teduh Bot Card ── */}
       <motion.div
         className="md:col-span-7 bg-lavender-50 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-5 cursor-pointer hover:bg-lavender-100 transition-colors border border-lavender-100 shadow-[0_4px_20px_-8px_rgba(165,145,204,0.12)]"
@@ -722,8 +750,50 @@ interface TabJurnalProps {
   onOpenCurhat?:    () => void;
 }
 
+/** Skeleton placeholder rendered while chart data is loading */
+function MoodChartSkeleton() {
+  return (
+    <div className="rounded-2xl bg-white border border-[#E2EDE3] shadow-sm overflow-hidden">
+      {/* Header skeleton */}
+      <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <div className="h-4 w-40 rounded-md bg-[#E2EDE3] animate-pulse" />
+          <div className="h-3 w-28 rounded-md bg-[#E2EDE3] animate-pulse" />
+        </div>
+        <div className="h-6 w-20 rounded-full bg-[#E2EDE3] animate-pulse shrink-0" />
+      </div>
+      {/* Chart skeleton — animated bars */}
+      <div className="px-4 pb-3" style={{ height: 200 }}>
+        <div className="h-full flex items-end gap-2 pb-1">
+          {[45, 70, 30, 85, 55, 65, 40].map((h, i) => (
+            <motion.div
+              key={i}
+              className="flex-1 rounded-t-lg bg-[#E2EDE3]"
+              style={{ height: `${h}%` }}
+              animate={{ opacity: [0.4, 0.75, 0.4] }}
+              transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
+            />
+          ))}
+        </div>
+      </div>
+      {/* Footer skeleton */}
+      <div className="px-5 py-3 border-t border-[#E2EDE3] flex items-center justify-between gap-3">
+        <div className="space-y-1.5">
+          <div className="h-2.5 w-24 rounded bg-[#E2EDE3] animate-pulse" />
+          <div className="h-4 w-20 rounded bg-[#E2EDE3] animate-pulse" />
+        </div>
+        <div className="flex gap-2">
+          {[1,2,3,4,5].map((n) => (
+            <div key={n} className="w-2 h-2 rounded-full bg-[#E2EDE3] animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnalProps) {
-  const { calendarStats } = useMoodStore();
+  const { calendarStats, isStatsLoading } = useMoodStore();
   const supabase = createClient();
   const [journalText, setJournalText] = useState("");
   const [isSaving,    setIsSaving]    = useState(false);
@@ -785,6 +855,9 @@ function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnal
 
       {/* ── Fallback to AreaChart if calendar data not yet loaded ── */}
       {!calendarStats && weeklyStats && <WeeklyMoodChart stats={weeklyStats} />}
+
+      {/* ── Skeleton while stats are loading ── */}
+      {isStatsLoading && !calendarStats && !weeklyStats && <MoodChartSkeleton />}
 
       {/* ── Curhat dengan AI Advisor card ── */}
       <motion.div
