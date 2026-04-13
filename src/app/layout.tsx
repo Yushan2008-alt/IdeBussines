@@ -1,22 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Lora } from "next/font/google";
 import "./globals.css";
-
-/* ── Google Fonts ── */
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-lora",
-  display: "swap",
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600", "700"],
-});
 
 /* ── SEO Metadata ── */
 export const metadata: Metadata = {
@@ -41,10 +24,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="id"
-      className={`${inter.variable} ${lora.variable}`}
-    >
+    <html lang="id">
       <body className="min-h-screen antialiased">
         {children}
       </body>

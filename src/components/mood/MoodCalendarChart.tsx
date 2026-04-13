@@ -167,8 +167,8 @@ export function MoodCalendarChart({ stats }: MoodCalendarChartProps) {
       </div>
 
       {/* ── Chart ── */}
-      <div className="px-2 overflow-x-auto" style={{ height: 200 }}>
-        <div className="min-w-[280px] h-full">
+      <div className="px-2 overflow-x-auto touch-pan-x scroll-smooth pb-1" style={{ height: 200 }}>
+        <div className="min-w-[320px] sm:min-w-[280px] h-full">
         {totalEntries === 0 ? (
           <div className="h-full flex items-center justify-center text-[#8B9E8F] text-sm">
             Catat mood pertamamu hari ini untuk melihat grafik 🌱

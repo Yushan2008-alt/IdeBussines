@@ -67,7 +67,11 @@ export const useMoodStore = create<MoodState>()((set) => ({
   isAiReplying:     false,
 
   /* Setters */
-  setCalendarStats:  (stats) => set({ calendarStats: stats }),
+  /**
+   * Reset overallSummary whenever calendar stats change so Curhat summary
+   * can be regenerated from the latest weekly mood data.
+   */
+  setCalendarStats:  (stats) => set({ calendarStats: stats, overallSummary: null }),
   setStatsLoading:   (v)     => set({ isStatsLoading: v }),
   setOverallSummary: (s)     => set({ overallSummary: s }),
   setSummaryLoading: (v)     => set({ isSummaryLoading: v }),
