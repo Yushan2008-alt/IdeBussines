@@ -308,13 +308,24 @@ export default function RuangTeduhApp() {
           filter: `user_id=eq.${currentUserId}`,
         },
         async () => {
-          const { data: stats } = await getWeeklyMoodStats();
-          if (stats) setWeeklyStats(stats);
+          try {
+            const { data: stats, error: weeklyError } = await getWeeklyMoodStats();
+            if (weeklyError) {
+              console.error("[mood weekly refresh]", weeklyError);
+            } else if (stats) {
+              setWeeklyStats(stats);
+            }
 
-          setStatsLoading(true);
-          const { data: calStats } = await getCalendarWeekStats(getClientCalendarWeekRange());
-          if (calStats) setCalendarStats(calStats);
-          setStatsLoading(false);
+            setStatsLoading(true);
+            const { data: calStats, error: calError } = await getCalendarWeekStats(getClientCalendarWeekRange());
+            if (calError) {
+              console.error("[mood calendar refresh]", calError);
+            } else if (calStats) {
+              setCalendarStats(calStats);
+            }
+          } finally {
+            setStatsLoading(false);
+          }
         },
       )
       .subscribe();
