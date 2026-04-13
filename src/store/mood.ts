@@ -67,7 +67,7 @@ export const useMoodStore = create<MoodState>()((set) => ({
   isAiReplying:     false,
 
   /* Setters */
-  setCalendarStats:  (stats) => set({ calendarStats: stats }),
+  setCalendarStats:  (stats) => set({ calendarStats: stats, overallSummary: null }),
   setStatsLoading:   (v)     => set({ isStatsLoading: v }),
   setOverallSummary: (s)     => set({ overallSummary: s }),
   setSummaryLoading: (v)     => set({ isSummaryLoading: v }),
