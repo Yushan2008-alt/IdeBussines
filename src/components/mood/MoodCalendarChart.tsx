@@ -167,7 +167,8 @@ export function MoodCalendarChart({ stats }: MoodCalendarChartProps) {
       </div>
 
       {/* ── Chart ── */}
-      <div className="px-2" style={{ height: 200 }}>
+      <div className="px-2 overflow-x-auto" style={{ height: 200 }}>
+        <div className="min-w-[280px] h-full">
         {totalEntries === 0 ? (
           <div className="h-full flex items-center justify-center text-[#8B9E8F] text-sm">
             Catat mood pertamamu hari ini untuk melihat grafik 🌱
@@ -176,7 +177,7 @@ export function MoodCalendarChart({ stats }: MoodCalendarChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={days}
-              margin={{ top: 8, right: 24, left: -28, bottom: 28 }}
+              margin={{ top: 8, right: 16, left: -20, bottom: 28 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -273,6 +274,7 @@ export function MoodCalendarChart({ stats }: MoodCalendarChartProps) {
             </ComposedChart>
           </ResponsiveContainer>
         )}
+        </div>
       </div>
 
       {/* ── Footer: Overall mood + legend ── */}

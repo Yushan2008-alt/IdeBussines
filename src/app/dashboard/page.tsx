@@ -795,8 +795,9 @@ function MoodChartSkeleton() {
 function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnalProps) {
   const { calendarStats, isStatsLoading } = useMoodStore();
   const supabase = createClient();
-  const [journalText, setJournalText] = useState("");
-  const [isSaving,    setIsSaving]    = useState(false);
+  const [journalText,  setJournalText]  = useState("");
+  const [isSaving,     setIsSaving]     = useState(false);
+  const [journalToast, setJournalToast] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!journalText.trim() || isSaving) return;
@@ -829,7 +830,11 @@ function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnal
         setIsSaving(false);
         return;
       }
-      if (error) console.error("[journal insert]", error.message);
+      if (error) {
+        console.error("[journal insert]", error.message);
+        setJournalToast("Gagal menyimpan jurnal. Periksa koneksi dan coba lagi. 💙");
+        setTimeout(() => setJournalToast(null), 3500);
+      }
     }
 
     // Optimistic fallback (offline / not logged in)
@@ -933,6 +938,22 @@ function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnal
           );
         })}
       </div>
+
+      {/* ── Journal save toast ── */}
+      <AnimatePresence>
+        {journalToast && (
+          <motion.div
+            key="journal-toast"
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0,  scale: 1 }}
+            exit={{   opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-peach-50 border border-peach-200 text-peach-600 rounded-2xl px-5 py-3.5 text-sm font-medium text-center shadow-sm"
+          >
+            {journalToast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -947,7 +968,8 @@ interface TabRuangCeritaProps {
 
 function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
   const supabase = createClient();
-  const [newPost, setNewPost] = useState("");
+  const [newPost,    setNewPost]    = useState("");
+  const [ceritaToast, setCeritaToast] = useState<string | null>(null);
   const tempPostCounterRef = useRef(0);
 
   useEffect(() => {
@@ -1061,6 +1083,8 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
       );
     } else if (error) {
       console.error("[community insert]", error.message);
+      setCeritaToast("Gagal membagikan cerita. Periksa koneksi dan coba lagi. 💙");
+      setTimeout(() => setCeritaToast(null), 3500);
     }
   };
 
@@ -1120,6 +1144,22 @@ function TabRuangCerita({ posts, setPosts }: TabRuangCeritaProps) {
           </motion.div>
         ))}
       </div>
+
+      {/* ── Cerita post toast ── */}
+      <AnimatePresence>
+        {ceritaToast && (
+          <motion.div
+            key="cerita-toast"
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0,  scale: 1 }}
+            exit={{   opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-peach-50 border border-peach-200 text-peach-600 rounded-2xl px-5 py-3.5 text-sm font-medium text-center shadow-sm"
+          >
+            {ceritaToast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
