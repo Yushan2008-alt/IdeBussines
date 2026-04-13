@@ -151,6 +151,11 @@ function formatDisplayDate(iso: string): string {
 }
 function formatRelativeTime(iso: string): string { return formatDisplayDate(iso); }
 
+/**
+ * Builds week boundaries from the user's local timezone, then serializes them
+ * to UTC ISO strings for server actions so Monday–Sunday mapping stays aligned
+ * between client display and server-side Supabase filtering.
+ */
 function getClientCalendarWeekRange(baseDate: Date = new Date()) {
   const weekStart = startOfWeek(baseDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(baseDate, { weekStartsOn: 1 });
