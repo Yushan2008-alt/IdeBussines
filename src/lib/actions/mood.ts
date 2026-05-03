@@ -6,7 +6,15 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { formatInTimeZone } from "date-fns-tz";
+import { z } from "zod";
 import type { MoodId } from "@/types/supabase";
+import {
+  computeStreak,
+  decidePostMoodRoute,
+  type MoodEmotion,
+  type RouteDecision,
+} from "@/lib/mood/state-machine";
 import {
   buildWeeklyStats,
   buildCalendarWeekStats,
@@ -14,6 +22,108 @@ import {
   type CalendarWeekStats,
 } from "@/lib/utils/mood-insights";
 import { endOfWeek, parseISO, startOfWeek } from "date-fns";
+
+/* ─── submitMood ────────────────────────────────────────── */
+
+const TZ = "Asia/Jakarta";
+
+const SubmitMoodSchema = z.object({
+  emotion: z.enum(["kewalahan", "sedih", "biasa", "tenang", "damai"]),
+  note: z.string().max(500).optional(),
+});
+
+export interface SubmitMoodResult {
+  success: boolean;
+  decision?: RouteDecision;
+  streak?: { current: number; longest: number; incrementedToday: boolean };
+  error?: string;
+}
+
+/**
+ * Submit a mood entry. Side effects:
+ *   1. Insert into mood_entries
+ *   2. Update mood_streaks
+ *   3. Compute and return RouteDecision (for client-side navigation)
+ *
+ * Does NOT auto-create crisis_logs — that's a separate explicit action triggered
+ * by the client after seeing the decision.
+ */
+export async function submitMood(input: unknown): Promise<SubmitMoodResult> {
+  const parsed = SubmitMoodSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: "Input tidak valid" };
+  }
+  const { emotion, note } = parsed.data;
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { success: false, error: "Unauthorized" };
+
+  const userId = auth.user.id;
+  const today = formatInTimeZone(new Date(), TZ, "yyyy-MM-dd");
+
+  // 1. Insert mood entry (mood_id is the existing column name)
+  const { error: insertErr } = await supabase
+    .from("mood_entries")
+    .insert({ user_id: userId, mood_id: emotion, note: note ?? null });
+  if (insertErr) return { success: false, error: "Gagal menyimpan mood" };
+
+  // 2. Fetch current streak + recent entries (last 7 days)
+  const [streakRes, recentRes] = await Promise.all([
+    supabase
+      .from("mood_streaks")
+      .select("current_streak, longest_streak, last_checkin_date")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("mood_entries")
+      .select("mood_id, created_at")
+      .eq("user_id", userId)
+      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+
+  // 3. Compute streak
+  const currentStreakRow = streakRes.data ?? {
+    current_streak: 0,
+    longest_streak: 0,
+    last_checkin_date: null,
+  };
+  const streakUpdate = computeStreak(
+    today,
+    currentStreakRow.last_checkin_date,
+    currentStreakRow.current_streak,
+    currentStreakRow.longest_streak
+  );
+
+  // 4. Upsert streak (only if first checkin of the day)
+  if (streakUpdate.isFirstCheckinToday) {
+    await supabase.from("mood_streaks").upsert({
+      user_id: userId,
+      current_streak: streakUpdate.newStreak,
+      longest_streak: streakUpdate.newLongest,
+      last_checkin_date: today,
+    });
+  }
+
+  // 5. Decide next route — map mood_id → emotion for state machine
+  const recent = (recentRes.data ?? []).map((r) => ({
+    emotion: r.mood_id as MoodEmotion,
+    created_at: r.created_at,
+  }));
+  const decision = decidePostMoodRoute(emotion, recent);
+
+  return {
+    success: true,
+    decision,
+    streak: {
+      current: streakUpdate.newStreak,
+      longest: streakUpdate.newLongest,
+      incrementedToday: streakUpdate.isFirstCheckinToday,
+    },
+  };
+}
 
 /* ─── Insert a new mood entry ──────────────────────────── */
 export async function insertMoodEntry(moodId: MoodId, note?: string) {

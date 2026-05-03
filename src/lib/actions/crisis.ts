@@ -1,32 +1,84 @@
-"use server";
+'use server';
 
 /**
  * RuangTeduh — Crisis Log Server Actions
  * Table: public.crisis_logs
- * Immutable audit log — only inserts, no updates or deletes.
+ * Append-only — no UPDATE/DELETE.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
 
-/* ─── Log a crisis modal open event ───────────────────── */
-export async function logCrisisEvent(hotlineCalled: string) {
+const LogCrisisSchema = z.object({
+  severity: z.enum(['low', 'medium', 'high']),
+  trigger_source: z.enum([
+    'manual_button',
+    'bot_keyword',
+    'mood_pattern_3day',
+    'onboarding_disclosure',
+  ]),
+  matched_keywords: z.array(z.string()).max(20).optional(),
+  hotline_clicked: z.string().max(50).optional(),
+});
+
+export interface LogCrisisResult {
+  success: boolean;
+  logId?: string;
+}
+
+/**
+ * Append-only crisis log. Fire-and-forget from client (do not block UI on this).
+ */
+export async function logCrisisEvent(input: unknown): Promise<LogCrisisResult> {
+  const parsed = LogCrisisSchema.safeParse(input);
+  if (!parsed.success) return { success: false };
+
   const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return { success: false };
 
-  // user may be anonymous / not logged in during a crisis
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('crisis_logs')
+    .insert({
+      user_id: auth.user.id,
+      severity: parsed.data.severity,
+      trigger_source: parsed.data.trigger_source,
+      matched_keywords: parsed.data.matched_keywords ?? null,
+      hotline_clicked: parsed.data.hotline_clicked ?? null,
+    })
+    .select('id')
+    .single();
 
-  const { error } = await supabase.from("crisis_logs").insert({
-    user_id:        user?.id ?? null,
-    hotline_called: hotlineCalled,
-    triggered_at:   new Date().toISOString(),
-  });
+  if (error || !data) return { success: false };
+  return { success: true, logId: data.id };
+}
 
-  if (error) {
-    // Non-fatal — never block the UI during a crisis event
-    console.error("[logCrisisEvent] insert error:", error.message);
-  }
-
-  return { success: true };
+export async function getActiveHotlines() {
+  return [
+    {
+      id: 'into-the-light',
+      name: 'Into The Light Indonesia',
+      phone: '119',
+      ext: '8',
+      hours: '24 jam',
+      tel_link: 'tel:119',
+      description: 'Hotline pencegahan bunuh diri nasional',
+    },
+    {
+      id: 'yayasan-pulih',
+      name: 'Yayasan Pulih',
+      phone: '021-78842580',
+      hours: 'Senin–Jumat, 09:00–17:00 WIB',
+      tel_link: 'tel:+62217884258',
+      description: 'Dukungan psikologis untuk korban kekerasan & trauma',
+    },
+    {
+      id: 'sejiwa',
+      name: 'SEJIWA',
+      phone: '119',
+      hours: '24 jam',
+      tel_link: 'tel:119',
+      description: 'Layanan dukungan psikologis Kemenkes RI',
+    },
+  ];
 }

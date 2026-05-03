@@ -6,6 +6,8 @@
  *    (required by @supabase/ssr so tokens don't expire mid-session).
  * 2. Protect private routes — redirect unauthenticated users to /login.
  * 3. Redirect already-authenticated users away from /login and /register.
+ * 4. Onboarding gate — redirect authenticated users who haven't completed
+ *    onboarding to /onboarding before reaching any protected route.
  *
  * Note: Next.js 16 renames "middleware" to "proxy".
  * The function must be exported as `proxy` (named export).
@@ -15,10 +17,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /* Routes that require a valid session ──────────────── */
-const PROTECTED_ROUTES = ["/dashboard", "/profil"];
+const PROTECTED_ROUTES = ["/dashboard", "/profil", "/bantuan", "/jurnal", "/komunitas"];
 
 /* Routes that logged-in users should be bounced from ─ */
 const AUTH_ROUTES = ["/login", "/register"];
+
+/* Paths exempt from the onboarding gate ────────────── */
+const ONBOARDING_BYPASS = ["/onboarding", "/auth", "/api", "/_next", "/login", "/register"];
 
 export async function proxy(request: NextRequest) {
   // Skip if Supabase env vars aren't configured yet
@@ -73,6 +78,24 @@ export async function proxy(request: NextRequest) {
     const dashUrl = request.nextUrl.clone();
     dashUrl.pathname = "/dashboard";
     return NextResponse.redirect(dashUrl);
+  }
+
+  // 3. Onboarding gate — authenticated user on a protected route
+  //    who hasn't completed onboarding → /onboarding
+  if (
+    user &&
+    PROTECTED_ROUTES.some((r) => pathname.startsWith(r)) &&
+    !ONBOARDING_BYPASS.some((p) => pathname.startsWith(p))
+  ) {
+    const { data: prefs } = await supabase
+      .from("user_preferences")
+      .select("onboarding_completed")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!prefs?.onboarding_completed) {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
   }
 
   return supabaseResponse;

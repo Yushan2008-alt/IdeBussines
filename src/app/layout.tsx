@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { CrisisFAB } from "@/components/crisis/CrisisFAB";
 
 /* ── SEO Metadata ── */
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="id">
       <body className="min-h-screen antialiased">
         {children}
+        <CrisisFAB />
       </body>
     </html>
   );
