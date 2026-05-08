@@ -38,6 +38,7 @@ export default function BreathingPage() {
   const activePhase = isBreathing ? BREATH_PHASES[phaseIdx] : null;
   const phaseLabel = activePhase?.label ?? "Siap untuk mulai?";
   const phaseHint = activePhase?.hint ?? "Mulai kapan pun kamu siap.";
+  const motionDuration = isBreathing && activePhase ? activePhase.duration : 0.6;
 
   useEffect(() => {
     if (!isBreathing) return;
@@ -97,7 +98,7 @@ export default function BreathingPage() {
                   scale: isBreathing && activePhase ? SCALE_BY_TONE[activePhase.tone] : 1,
                   opacity: isBreathing ? 0.35 : 0.08,
                 }}
-                transition={{ duration: 4, ease: "easeInOut" }}
+                transition={{ duration: motionDuration, ease: "easeInOut" }}
                 className="absolute h-44 w-44 rounded-full bg-lavender-300"
               />
               <div className="relative z-10 flex h-36 w-36 items-center justify-center rounded-full border-[6px] border-white bg-lavender-50 shadow-[0_4px_18px_-6px_rgba(165,145,204,0.45)]">
