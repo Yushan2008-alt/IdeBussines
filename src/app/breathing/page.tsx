@@ -37,16 +37,16 @@ export default function BreathingPage() {
 
   useEffect(() => {
     if (!isBreathing) return;
-    let remaining = BREATH_PHASES[phaseIdx].duration;
-    setSecondsLeft(remaining);
 
     const id = window.setInterval(() => {
-      remaining -= 1;
-      if (remaining <= 0) {
-        setPhaseIdx((idx) => (idx + 1) % BREATH_PHASES.length);
-      } else {
-        setSecondsLeft(remaining);
-      }
+      setSecondsLeft((current) => {
+        if (current <= 1) {
+          const nextIdx = (phaseIdx + 1) % BREATH_PHASES.length;
+          setPhaseIdx(nextIdx);
+          return BREATH_PHASES[nextIdx].duration;
+        }
+        return current - 1;
+      });
     }, 1000);
 
     return () => window.clearInterval(id);
