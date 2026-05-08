@@ -28,8 +28,12 @@ const SCALE_BY_TONE: Record<BreathPhase["tone"], number> = {
 
 export default function BreathingPage() {
   const [isBreathing, setIsBreathing] = useState(false);
-  const [phaseIdx, setPhaseIdx] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(BREATH_PHASES[0].duration);
+  const [breathingState, setBreathingState] = useState(() => ({
+    phaseIdx: 0,
+    secondsLeft: BREATH_PHASES[0].duration,
+  }));
+
+  const { phaseIdx, secondsLeft } = breathingState;
 
   const activePhase = isBreathing ? BREATH_PHASES[phaseIdx] : null;
   const phaseLabel = activePhase?.label ?? "Siap untuk mulai?";
@@ -39,35 +43,36 @@ export default function BreathingPage() {
     if (!isBreathing) return;
 
     const id = window.setInterval(() => {
-      setSecondsLeft((current) => {
-        if (current <= 1) {
-          const nextIdx = (phaseIdx + 1) % BREATH_PHASES.length;
-          setPhaseIdx(nextIdx);
-          return BREATH_PHASES[nextIdx].duration;
+      setBreathingState((current) => {
+        if (current.secondsLeft <= 1) {
+          const nextIdx = (current.phaseIdx + 1) % BREATH_PHASES.length;
+          return { phaseIdx: nextIdx, secondsLeft: BREATH_PHASES[nextIdx].duration };
         }
-        return current - 1;
+        return { ...current, secondsLeft: current.secondsLeft - 1 };
       });
     }, 1000);
 
     return () => window.clearInterval(id);
-  }, [isBreathing, phaseIdx]);
+  }, [isBreathing]);
 
   const handleToggle = () => {
     if (isBreathing) {
       setIsBreathing(false);
-      setPhaseIdx(0);
-      setSecondsLeft(BREATH_PHASES[0].duration);
+      setBreathingState({ phaseIdx: 0, secondsLeft: BREATH_PHASES[0].duration });
       return;
     }
-    setPhaseIdx(0);
-    setSecondsLeft(BREATH_PHASES[0].duration);
+    setBreathingState({ phaseIdx: 0, secondsLeft: BREATH_PHASES[0].duration });
     setIsBreathing(true);
   };
 
   return (
     <main className="min-h-screen bg-cream px-6 py-10">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-sage-700">
+        <Link
+          href="/"
+          aria-label="Kembali ke beranda"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-sage-700"
+        >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke Beranda
         </Link>
