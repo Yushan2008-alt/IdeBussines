@@ -94,6 +94,39 @@ export async function getJournalEntries(limit = 50): Promise<{
   return { data: enriched, error: null };
 }
 
+/* ─── Update a journal entry ───────────────────────────── */
+export async function updateJournalEntry(
+  entryId: string,
+  text: string
+): Promise<{ data: JournalEntryDisplay | null; error: string | null }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { data: null, error: "Tidak terautentikasi." };
+  if (!text.trim()) return { data: null, error: "Jurnal tidak boleh kosong." };
+
+  const { data, error } = await supabase
+    .from("journal_entries")
+    .update({ text: text.trim() })
+    .eq("id", entryId)
+    .eq("user_id", user.id)   // RLS double-check
+    .select()
+    .single();
+
+  if (error) return { data: null, error: error.message };
+
+  revalidatePath("/dashboard");
+
+  const entry: JournalEntryDisplay = {
+    ...data,
+    displayDate: formatDisplayDate(data.created_at),
+  };
+  return { data: entry, error: null };
+}
+
 /* ─── Delete a journal entry ───────────────────────────── */
 export async function deleteJournalEntry(entryId: string) {
   const supabase = await createClient();

@@ -10,6 +10,7 @@ import {
   Book, MessageCircle, ShieldCheck, Send, CheckCircle,
   UserPlus, FileText, HeartHandshake, ListChecks, Activity, Users,
   ChevronRight, Video, User, Bell, Lock, LogOut, TrendingUp, Brain,
+  Pencil, Trash2,
 } from "lucide-react";
 import type {
   MoodId, SafetyPlan, BotMessage, Counselor, Resource, DailyChallenge,
@@ -20,12 +21,12 @@ import {
   bookCounselorSession,
   type BookingActionStatus,
 } from "@/lib/actions/booking";
-import MoodWeeklyInsights from "@/components/dashboard/MoodWeeklyInsights";
 import { WeeklyMoodChart } from "@/components/mood/WeeklyMoodChart";
 import { MoodCalendarChart } from "@/components/mood/MoodCalendarChart";
 import { CurhatModal } from "@/components/mood/CurhatModal";
 import { insertMoodEntry, getWeeklyMoodStats, getCalendarWeekStats } from "@/lib/actions/mood";
 import { sendTeduhBotMessage } from "@/lib/actions/teduhbot";
+import { updateJournalEntry, deleteJournalEntry } from "@/lib/actions/journal";
 import type { WeeklyStats } from "@/lib/utils/mood-insights";
 import { useMoodStore } from "@/store/mood";
 
@@ -563,9 +564,8 @@ function TabHome({
   });
   const { optimisticAddEntry, setCalendarStats } = useMoodStore();
 
-  const [selectedMood,    setSelectedMood]    = useState<MoodId | null>(null);
-  const [moodRefreshTick, setMoodRefreshTick] = useState(0);
-  const [isBreathing,     setIsBreathing]     = useState(false);
+  const [selectedMood, setSelectedMood] = useState<MoodId | null>(null);
+  const [isBreathing,  setIsBreathing]  = useState(false);
   const [phaseIdx,        setPhaseIdx]        = useState(0);
   const [toastMsg,        setToastMsg]        = useState<string | null>(null);
 
@@ -604,10 +604,7 @@ function TabHome({
       return;
     }
 
-    // 4. Trigger MoodWeeklyInsights refresh
-    setMoodRefreshTick((prev) => prev + 1);
-
-    // 5. Sync real calendar stats from server (confirms optimistic data)
+    // 4. Sync real calendar stats from server (confirms optimistic data)
     const { data: calStats } = await getCalendarWeekStats(getClientCalendarWeekRange());
     if (calStats) setCalendarStats(calStats);
   };
@@ -715,8 +712,6 @@ function TabHome({
           {isBreathing ? "Hentikan" : "Mulai Bernapas"}
         </button>
       </div>
-
-      <MoodWeeklyInsights userId={userId} refreshTick={moodRefreshTick} />
 
       {/* ── Micro Challenge ── */}
       <div className="md:col-span-12 bg-white border border-border p-6 md:p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-5 shadow-[0_4px_20px_-8px_rgba(45,74,53,0.04)]">
@@ -855,6 +850,65 @@ function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnal
   const [isSaving,     setIsSaving]     = useState(false);
   const [journalToast, setJournalToast] = useState<string | null>(null);
 
+  /* ── Edit state ── */
+  const [editingId,   setEditingId]   = useState<string | null>(null);
+  const [editText,    setEditText]    = useState("");
+  const [isUpdating,  setIsUpdating]  = useState(false);
+
+  /* ── Delete state ── */
+  const [deletingId,  setDeletingId]  = useState<string | null>(null);
+  const [isDeleting,  setIsDeleting]  = useState(false);
+
+  const handleEditStart = (entry: JournalEntryDisplay) => {
+    setEditingId(entry.id);
+    setEditText(entry.text);
+    setDeletingId(null);
+  };
+
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleUpdate = async (entryId: string) => {
+    if (!editText.trim() || isUpdating) return;
+    setIsUpdating(true);
+    const { data, error } = await updateJournalEntry(entryId, editText);
+    setIsUpdating(false);
+    if (error) {
+      setJournalToast(`Gagal memperbarui jurnal. ${error}`);
+      setTimeout(() => setJournalToast(null), 3500);
+      return;
+    }
+    if (data) {
+      setEntries((prev) => prev.map((e) => (e.id === entryId ? data : e)));
+    }
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleDeleteConfirm = (entryId: string) => {
+    setDeletingId(entryId);
+    setEditingId(null);
+  };
+
+  const handleDeleteCancel = () => setDeletingId(null);
+
+  const handleDelete = async (entryId: string) => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    const result = await deleteJournalEntry(entryId);
+    setIsDeleting(false);
+    if (result?.error) {
+      setJournalToast(`Gagal menghapus jurnal. ${result.error}`);
+      setTimeout(() => setJournalToast(null), 3500);
+      setDeletingId(null);
+      return;
+    }
+    setEntries((prev) => prev.filter((e) => e.id !== entryId));
+    setDeletingId(null);
+  };
+
   const handleSave = async () => {
     if (!journalText.trim() || isSaving) return;
     setIsSaving(true);
@@ -973,22 +1027,109 @@ function TabJurnal({ entries, setEntries, weeklyStats, onOpenCurhat }: TabJurnal
       <h3 className="font-semibold text-muted text-sm uppercase tracking-widest px-2">Catatan Perjalananmu</h3>
       <div className="space-y-4">
         {entries.map((entry, i) => {
-          const mood     = MOODS.find((m) => m.id === entry.mood_id) ?? MOODS[2];
-          const MoodIcon = mood.icon;
+          const mood      = MOODS.find((m) => m.id === entry.mood_id) ?? MOODS[2];
+          const MoodIcon  = mood.icon;
+          const isEditing = editingId === entry.id;
+          const isConfirm = deletingId === entry.id;
+
           return (
             <motion.div
               key={entry.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06, duration: 0.35 }}
-              className="bg-white p-6 rounded-[2rem] flex gap-4 border border-border shadow-sm"
+              className="bg-white p-6 rounded-[2rem] border border-border shadow-sm"
             >
-              <div className={`w-12 h-12 rounded-2xl ${mood.base} flex shrink-0 items-center justify-center border border-white`}>
-                <MoodIcon className="w-6 h-6" strokeWidth={1.75} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-muted-light mb-1.5">{entry.displayDate}</p>
-                <p className="text-forest text-sm leading-relaxed font-medium">{entry.text}</p>
+              <div className="flex gap-4">
+                <div className={`w-12 h-12 rounded-2xl ${mood.base} flex shrink-0 items-center justify-center border border-white`}>
+                  <MoodIcon className="w-6 h-6" strokeWidth={1.75} />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-semibold text-muted-light">{entry.displayDate}</p>
+                    {!isEditing && !isConfirm && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleEditStart(entry)}
+                          className="p-1.5 rounded-xl text-muted hover:text-forest hover:bg-sage-50 transition-colors"
+                          title="Edit jurnal"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteConfirm(entry.id)}
+                          className="p-1.5 rounded-xl text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Hapus jurnal"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Edit mode ── */}
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <textarea
+                        className="w-full h-28 bg-sage-50 border border-border rounded-2xl p-4 text-forest text-sm focus:outline-none focus:ring-2 focus:ring-sage-200 resize-none font-medium leading-relaxed"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleUpdate(entry.id); }}
+                        autoFocus
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={handleEditCancel}
+                          className="px-4 py-2 rounded-full text-xs font-semibold text-muted bg-sage-50 hover:bg-sage-100 border border-border transition-colors"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={() => handleUpdate(entry.id)}
+                          disabled={isUpdating || !editText.trim()}
+                          className="px-4 py-2 rounded-full text-xs font-semibold text-white bg-sage-500 hover:bg-sage-600 disabled:bg-muted-light disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                        >
+                          {isUpdating ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }} className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full" />
+                          ) : (
+                            <CheckCircle className="w-3 h-3" />
+                          )}
+                          Simpan
+                        </button>
+                      </div>
+                    </div>
+                  ) : isConfirm ? (
+                    /* ── Delete confirmation ── */
+                    <div className="space-y-3">
+                      <p className="text-sm text-forest leading-relaxed font-medium line-through opacity-50">{entry.text}</p>
+                      <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
+                        <p className="text-xs text-red-600 font-medium flex-1">Hapus catatan ini secara permanen?</p>
+                        <button
+                          onClick={handleDeleteCancel}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold text-muted bg-white border border-border hover:bg-sage-50 transition-colors"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={() => handleDelete(entry.id)}
+                          disabled={isDeleting}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-red-500 hover:bg-red-600 disabled:bg-muted-light disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                        >
+                          {isDeleting ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }} className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full" />
+                          ) : (
+                            <Trash2 className="w-3 h-3" />
+                          )}
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* ── Normal view ── */
+                    <p className="text-forest text-sm leading-relaxed font-medium">{entry.text}</p>
+                  )}
+                </div>
               </div>
             </motion.div>
           );
