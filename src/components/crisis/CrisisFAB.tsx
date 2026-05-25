@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/lib/i18n/context';
 
 export function CrisisFAB() {
+  const { t } = useLanguage();
 
   return (
     <motion.div
@@ -14,7 +16,7 @@ export function CrisisFAB() {
     >
       <Link
         href="/bantuan?source=fab"
-        aria-label="Butuh bantuan segera"
+        aria-label={t.common.crisis.needHelp}
         className="group relative flex h-14 w-14 items-center justify-center"
       >
         {/* Pulse ring */}
@@ -47,10 +49,10 @@ export function CrisisFAB() {
 
         {/* Label - muncul di hover */}
         <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-forest/90 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100 group-hover:-top-9">
-          Butuh Bantuan?
+          {t.common.crisis.needHelp}
         </span>
       </Link>
-      <span className="sr-only">Tombol bantuan darurat kesehatan mental</span>
+      <span className="sr-only">{t.common.crisis.needHelp}</span>
     </motion.div>
   );
 }

@@ -19,6 +19,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, AlertCircle, RefreshCw, Brain } from "lucide-react";
 import { useMoodStore } from "@/store/mood";
+import { useLanguage } from "@/lib/i18n/context";
 import {
   sendCurhatMessage,
   generateOverallSummary,
@@ -111,6 +112,8 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
     clearCurhat,
   } = useMoodStore();
 
+  const { t } = useLanguage();
+
   const [input,    setInput]    = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
   const bottomRef  = useRef<HTMLDivElement>(null);
@@ -201,7 +204,7 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -210,7 +213,7 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
 
           {/* Panel */}
           <motion.div
-            className="fixed inset-x-0 bottom-0 md:inset-auto md:right-6 md:bottom-6 md:w-[420px] z-50
+            className="fixed inset-x-0 bottom-0 md:inset-auto md:right-6 md:bottom-6 md:w-[420px] z-[60]
                        flex flex-col bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden"
             style={{ maxHeight: "90dvh" }}
             initial={{ y: "100%", opacity: 0 }}
@@ -225,7 +228,7 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-[#2D4A35]">
-                  Curhat dengan AI Advisor
+                  {t.ai.curhat}
                 </h3>
                 <p className="text-xs text-[#8B9E8F] truncate">
                   Gemini · Konteks mood 7 hari
@@ -245,7 +248,7 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
                 <div className="flex items-center gap-1.5 mb-1">
                   <Sparkles size={11} className="text-[#5A7D61]" />
                   <p className="text-[10px] font-bold text-[#5A7D61] uppercase tracking-wider">
-                    Overall Mood Minggu Ini
+                    {t.ai.summary}
                   </p>
                 </div>
                 {isSummaryLoading ? (
@@ -352,7 +355,7 @@ export function CurhatModal({ isOpen, onClose }: CurhatModalProps) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ceritakan perasaanmu…"
+                  placeholder={t.ai.typeMessage}
                   rows={1}
                   className="flex-1 resize-none bg-[#F4F8F5] border border-[#E2EDE3] rounded-2xl px-4 py-2.5 text-sm text-[#2D4A35] placeholder:text-[#8B9E8F] focus:outline-none focus:ring-2 focus:ring-[#8FAF94] leading-relaxed"
                   style={{ maxHeight: 96 }}

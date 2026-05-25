@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CrisisFAB } from "@/components/crisis/CrisisFAB";
+import { LanguageProvider } from "@/lib/i18n/context";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 /* ── SEO Metadata ── */
 export const metadata: Metadata = {
@@ -25,10 +27,13 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
-        {children}
-        <CrisisFAB />
+        <LanguageProvider>
+          {children}
+          <CrisisFAB />
+          <LanguageSwitcher />
+        </LanguageProvider>
       </body>
     </html>
   );

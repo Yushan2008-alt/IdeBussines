@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { endOfWeek, startOfWeek } from "date-fns";
@@ -29,6 +29,7 @@ import { sendTeduhBotMessage } from "@/lib/actions/teduhbot";
 import { updateJournalEntry, deleteJournalEntry } from "@/lib/actions/journal";
 import type { WeeklyStats } from "@/lib/utils/mood-insights";
 import { useMoodStore } from "@/store/mood";
+import { useLanguage } from "@/lib/i18n/context";
 
 /* ══════════════════════════════════════════════════════════
    FALLBACK DATA
@@ -361,6 +362,7 @@ export default function RuangTeduhApp() {
     author: "Anonim",
   }));
   const [weeklyStats,    setWeeklyStats]    = useState<WeeklyStats | null>(null);
+  const { t } = useLanguage();
 
   return (
     <div className="bg-cream min-h-screen text-forest flex flex-col md:flex-row w-full">
@@ -380,11 +382,11 @@ export default function RuangTeduhApp() {
 
         <div className="flex w-full md:flex-col gap-1">
           {[
-            { id: "home",         icon: Home,         label: "Beranda" },
-            { id: "jurnal",       icon: Book,         label: "Jurnal"  },
-            { id: "ruang-cerita", icon: MessageCircle, label: "Cerita"  },
-            { id: "bantuan",      icon: ShieldCheck,  label: "Bantuan" },
-            { id: "profil",       icon: User,         label: "Profil"  },
+            { id: "home",         icon: Home,         label: t.nav.home },
+            { id: "jurnal",       icon: Book,         label: t.nav.journal },
+            { id: "ruang-cerita", icon: MessageCircle, label: t.nav.community },
+            { id: "bantuan",      icon: ShieldCheck,  label: t.nav.mood },
+            { id: "profil",       icon: User,         label: t.nav.profile },
           ].map((item) => (
             <NavItem
               key={item.id}
@@ -427,7 +429,7 @@ export default function RuangTeduhApp() {
             >
               <Phone className="w-4 h-4" />
             </motion.span>
-            Bantuan Darurat
+            {t.dashboard.emergency}
           </motion.button>
         </header>
 
@@ -488,7 +490,7 @@ export default function RuangTeduhApp() {
             whileTap={{ scale: 0.92 }}
             onClick={() => setIsCurhatOpen(true)}
             className="fixed bottom-24 md:bottom-10 right-5 md:right-10 w-[60px] h-[60px] bg-lavender-400 hover:bg-lavender-500 rounded-full flex items-center justify-center shadow-[0_8px_32px_-8px_rgba(165,145,204,0.6)] text-white z-30 ring-4 ring-lavender-100 transition-colors"
-            aria-label="Curhat dengan AI"
+            aria-label={t.ai.curhat}
           >
             <HeartHandshake className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-peach-400 rounded-full border-2 border-white animate-pulse" />
@@ -553,13 +555,14 @@ interface TabHomeProps {
 function TabHome({
   userName, onOpenBot, challengeDone, setChallengeDone, dailyChallenge, dailyAffirmation,
 }: TabHomeProps) {
-  const [greeting] = useState(() => {
+  const { t } = useLanguage();
+  const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Selamat Pagi";
-    if (hour < 15) return "Selamat Siang";
-    if (hour < 18) return "Selamat Sore";
-    return "Selamat Malam";
-  });
+    if (hour < 12) return t.dashboard.greeting.morning;
+    if (hour < 15) return t.dashboard.greeting.afternoon;
+    if (hour < 18) return t.dashboard.greeting.evening;
+    return t.dashboard.greeting.night;
+  }, [t]);
   const { optimisticAddEntry, setCalendarStats } = useMoodStore();
 
   const [selectedMood, setSelectedMood] = useState<MoodId | null>(null);
@@ -1810,7 +1813,7 @@ function SafetyPlanModal({ isOpen, onClose, plan, setPlan }: SafetyPlanModalProp
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
@@ -1925,6 +1928,7 @@ interface TeduhBotModalProps {
 }
 
 function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModalProps) {
+  const { t } = useLanguage();
   const supabase   = createClient();
   const [inp,      setInp]      = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -1968,7 +1972,7 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex md:items-center justify-center md:p-6 items-end">
+        <div className="fixed inset-0 z-[60] flex md:items-center justify-center md:p-6 items-end">
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
@@ -2066,7 +2070,7 @@ function TeduhBotModal({ isOpen, onClose, messages, setMessages }: TeduhBotModal
               <div className="bg-sage-50 rounded-2xl p-1.5 flex border border-border focus-within:ring-2 focus-within:ring-sage-200 transition-all">
                 <input
                   className="flex-1 bg-transparent px-4 outline-none text-sm font-medium text-forest placeholder:text-muted-light"
-                  placeholder="Ketik apa yang kamu rasakan..."
+                  placeholder={t.ai.typeMessage}
                   value={inp}
                   onChange={(e) => setInp(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) onSend(); }}
@@ -2119,7 +2123,7 @@ function SOSModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
