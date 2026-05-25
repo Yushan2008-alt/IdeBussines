@@ -437,7 +437,6 @@ export default function RuangTeduhApp() {
             <motion.div key="home" variants={pageVariants} initial="initial" animate="animate" exit="exit">
               <TabHome
                 userName={currentUserName}
-                userId={currentUserId}
                 onOpenBot={() => setIsCurhatOpen(true)}
                 challengeDone={challengeDone}
                 setChallengeDone={setChallengeDone}
@@ -544,7 +543,6 @@ function NavItem({ id, icon: Icon, label, active, onClick }: NavItemProps) {
 ══════════════════════════════════════════════════════════ */
 interface TabHomeProps {
   userName:         string;
-  userId:           string | null;
   onOpenBot:        () => void;
   challengeDone:    boolean;
   setChallengeDone: (v: boolean) => void;
@@ -553,7 +551,7 @@ interface TabHomeProps {
 }
 
 function TabHome({
-  userName, userId, onOpenBot, challengeDone, setChallengeDone, dailyChallenge, dailyAffirmation,
+  userName, onOpenBot, challengeDone, setChallengeDone, dailyChallenge, dailyAffirmation,
 }: TabHomeProps) {
   const [greeting] = useState(() => {
     const hour = new Date().getHours();
@@ -652,11 +650,41 @@ function TabHome({
               animate={{ opacity: 1, height: "auto", y: 0 }}
               exit={{   opacity: 0, height: 0 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-10"
+              className="relative z-10 space-y-3"
             >
               <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl text-forest font-medium text-sm shadow-sm border border-white">
                 {MOOD_MESSAGES[selectedMood]}
               </div>
+
+              {/* Crisis prompt for negative moods */}
+              {(selectedMood === 'kewalahan' || selectedMood === 'sedih') && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.35 }}
+                  className="bg-peach-50 border border-peach-200 rounded-2xl px-5 py-4"
+                >
+                  <p className="text-xs font-semibold text-peach-600 mb-2 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" />
+                    Butuh bicara dengan seseorang sekarang?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href="tel:119"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-peach-500 text-white text-xs font-bold px-4 py-2 hover:bg-peach-600 transition-colors shadow-sm"
+                    >
+                      <Phone className="w-3 h-3" />
+                      119 ext 8 — Into The Light
+                    </a>
+                    <a
+                      href="/bantuan?source=mood_negative"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white text-peach-500 text-xs font-bold px-4 py-2 border border-peach-200 hover:bg-peach-50 transition-colors"
+                    >
+                      Lihat Semua Hotline
+                    </a>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -787,6 +815,41 @@ function TabHome({
         </p>
         <p className="text-muted text-xs mt-4 font-semibold tracking-wide uppercase relative z-10">&mdash; {dailyAffirmation.author}</p>
       </div>
+
+      {/* ── Crisis Hotline Reminder ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="md:col-span-12 bg-gradient-to-br from-peach-50 to-lavender-50 border border-peach-100 rounded-[2.5rem] p-5 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4"
+      >
+        <div className="flex items-center gap-3 text-center md:text-left">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.2rem] bg-gradient-to-br from-peach-300 to-peach-400 shadow-[0_4px_12px_-4px_rgba(217,143,96,0.4)]">
+            <Phone className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-forest">Butuh bantuan sekarang?</p>
+            <p className="text-xs text-muted leading-relaxed">
+              Hotline krisis 24 jam — rahasia, gratis, dan siap mendengarkan.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <a
+            href="tel:112"
+            className="inline-flex items-center gap-1.5 rounded-full bg-peach-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-peach-600 transition-all shadow-[0_4px_12px_-4px_rgba(217,143,96,0.5)]"
+          >
+            <Phone className="w-3.5 h-3.5" />
+            112 Darurat
+          </a>
+          <a
+            href="tel:119"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white text-peach-500 text-xs font-bold px-5 py-2.5 border border-peach-200 hover:bg-peach-50 transition-all"
+          >
+            119 ext 8
+          </a>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -1802,6 +1865,35 @@ function SafetyPlanModal({ isOpen, onClose, plan, setPlan }: SafetyPlanModalProp
                   </div>
                 );
               })}
+            </div>
+
+            {/* Hotline quick-access */}
+            <div className="rounded-2xl bg-peach-50 border border-peach-200 p-4">
+              <p className="text-xs font-bold text-peach-600 mb-2.5 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5" />
+                Hotline Darurat — Tekan untuk menelepon
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="tel:112"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-peach-500 text-white text-xs font-bold px-4 py-2 hover:bg-peach-600 transition-colors shadow-sm"
+                >
+                  <Phone className="w-3 h-3" />
+                  112 Darurat Nasional
+                </a>
+                <a
+                  href="tel:119"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white text-peach-500 text-xs font-bold px-4 py-2 border border-peach-200 hover:bg-peach-50 transition-colors"
+                >
+                  119 ext 8 — Into The Light
+                </a>
+                <a
+                  href="tel:02178842580"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white text-peach-500 text-xs font-bold px-4 py-2 border border-peach-200 hover:bg-peach-50 transition-colors"
+                >
+                  (021) 788-42580 — Yayasan Pulih
+                </a>
+              </div>
             </div>
 
             {/* Footer */}

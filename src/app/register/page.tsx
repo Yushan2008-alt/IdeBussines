@@ -537,18 +537,23 @@ function Step3({ fullName }: { fullName: string }) {
         Mulai Perjalananmu <ArrowRight className="w-4 h-4" />
       </motion.button>
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.9 }}
-        className="text-xs text-muted-light mt-8 leading-relaxed"
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9, duration: 0.5 }}
+        className="mt-6 py-4 px-5 bg-peach-50/60 border border-peach-100 rounded-2xl text-center"
       >
-        Butuh bantuan segera?{" "}
-        <a href="tel:119" className="text-peach-500 font-bold hover:underline">
-          119 ext 8
-        </a>{" "}
-        · Into The Light, 24 jam.
-      </motion.p>
+        <p className="text-xs text-muted leading-relaxed">
+          Butuh bantuan segera?{" "}
+          <a
+            href="tel:119"
+            className="text-peach-500 font-bold hover:underline"
+          >
+            119 ext 8
+          </a>{" "}
+          · Into The Light Indonesia · 24 jam · Gratis
+        </p>
+      </motion.div>
     </div>
   );
 }
@@ -805,13 +810,23 @@ export default function RegisterPage() {
 
         {/* Crisis footer */}
         {step < 3 && (
-          <p className="text-center text-xs text-muted-light mt-4">
-            Dalam krisis?{" "}
-            <a href="tel:119" className="text-peach-500 font-semibold hover:underline">
-              119 ext 8
-            </a>{" "}
-            · Into The Light · 24 jam
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="mt-4 py-3 px-4 bg-peach-50/60 border border-peach-100 rounded-2xl text-center"
+          >
+            <p className="text-xs text-muted leading-relaxed">
+              Dalam krisis?{" "}
+              <a
+                href="tel:119"
+                className="text-peach-500 font-bold hover:underline"
+              >
+                119 ext 8
+              </a>{" "}
+              · Into The Light Indonesia · 24 jam · Gratis
+            </p>
+          </motion.div>
         )}
       </div>
     </div>

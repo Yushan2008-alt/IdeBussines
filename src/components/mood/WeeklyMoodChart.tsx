@@ -16,7 +16,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Dot,
 } from "recharts";
 import type { DotProps } from "recharts";
 import {
