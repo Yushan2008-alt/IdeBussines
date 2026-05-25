@@ -10,6 +10,7 @@ function getSafeNext(next: string | null) {
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const type = requestUrl.searchParams.get("type");
   const next = getSafeNext(requestUrl.searchParams.get("next"));
 
   if (code) {
@@ -17,6 +18,9 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      if (type === "recovery") {
+        return NextResponse.redirect(new URL("/reset-password", requestUrl.origin));
+      }
       return NextResponse.redirect(new URL(next, requestUrl.origin));
     }
   }

@@ -84,6 +84,22 @@ export async function signOut() {
   redirect("/login");
 }
 
+/* ─── Reset Password (send email) ──────────────────────── */
+export async function resetPassword(email: string) {
+  const supabase = await createClient();
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/callback?type=recovery`,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
 /* ─── Get Current User (safe for Server Components) ───── */
 export async function getCurrentUser() {
   const supabase = await createClient();
