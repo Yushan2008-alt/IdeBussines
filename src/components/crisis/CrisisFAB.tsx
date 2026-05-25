@@ -10,7 +10,7 @@ export function CrisisFAB() {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ delay: 0.5, type: 'spring' }}
-      className="fixed bottom-20 right-4 z-50 md:bottom-6"
+      className="fixed bottom-24 right-[88px] z-50 md:bottom-10 md:right-[108px]"
     >
       <Link
         href="/bantuan?source=fab"
