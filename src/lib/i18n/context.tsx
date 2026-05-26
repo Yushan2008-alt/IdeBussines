@@ -26,22 +26,27 @@ function getInitialLanguage(): Language {
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Language>(getInitialLanguage);
+  const [lang, setLangState] = useState<Language>("id");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "en" || stored === "id") {
+      setLangState(stored);
+      document.documentElement.lang = stored === "en" ? "en" : "id";
+    }
+  }, []);
 
   const setLang = useCallback((next: Language) => {
     setLangState(next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {}
+    document.documentElement.lang = next === "en" ? "en" : "id";
   }, []);
 
   const toggleLang = useCallback(() => {
     setLang(lang === "id" ? "en" : "id");
   }, [lang, setLang]);
-
-  useEffect(() => {
-    document.documentElement.lang = lang === "en" ? "en" : "id";
-  }, [lang]);
 
   const value: LanguageContextValue = {
     lang,
