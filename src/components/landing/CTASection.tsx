@@ -4,16 +4,19 @@ import { useRef } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight, Heart, Lock, Zap } from "lucide-react";
-
-const TRUST_BADGES = [
-  { icon: Heart,  text: "100% Gratis Selamanya" },
-  { icon: Lock,   text: "Data Dienkripsi & Privat" },
-  { icon: Zap,    text: "Akses Instan, Tanpa Tunggu" },
-];
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function CTASection() {
+  const { t } = useLanguage();
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  const badgeTexts = t.landing.cta.badges;
+  const TRUST_BADGES = [
+    { icon: Heart, text: badgeTexts[0] },
+    { icon: Lock,  text: badgeTexts[1] },
+    { icon: Zap,   text: badgeTexts[2] },
+  ];
 
   return (
     <section id="about" className="py-28 bg-cream relative overflow-hidden">
@@ -43,7 +46,7 @@ export default function CTASection() {
           transition={{ delay: 0.2 }}
           className="text-sm font-semibold text-sage-600 tracking-widest uppercase mb-4"
         >
-          Mulai Hari Ini
+          {t.landing.cta.title}
         </motion.p>
 
         <motion.h2
@@ -52,9 +55,7 @@ export default function CTASection() {
           transition={{ delay: 0.3, duration: 0.7 }}
           className="font-display text-4xl xl:text-5xl text-forest font-semibold leading-tight mb-6"
         >
-          Ambil Satu Langkah Kecil
-          <br />
-          <span className="gradient-text">Untuk Dirimu Sendiri.</span>
+          {t.landing.cta.heading}
         </motion.h2>
 
         <motion.p
@@ -63,9 +64,7 @@ export default function CTASection() {
           transition={{ delay: 0.4 }}
           className="text-lg text-muted leading-relaxed mb-10 max-w-xl mx-auto"
         >
-          Tidak perlu tahu harus mulai dari mana. Cukup buka RuangTeduh,
-          dan kami akan menemanimu dari sana.{" "}
-          <span className="text-forest font-medium">Satu langkah sudah cukup.</span>
+          {t.landing.cta.description}
         </motion.p>
 
         {/* CTA Button */}
@@ -82,7 +81,7 @@ export default function CTASection() {
               whileTap={{ scale: 0.97 }}
             >
               <Heart className="w-5 h-5 fill-white/70" />
-              Daftar Gratis Sekarang
+              {t.landing.cta.cta}
               <ArrowRight className="w-5 h-5" />
             </motion.button>
           </Link>

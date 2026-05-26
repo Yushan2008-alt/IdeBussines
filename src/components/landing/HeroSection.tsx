@@ -4,18 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Heart, Users, Sparkles, Star } from "lucide-react";
-
-/* ── Mood Selector ── */
-const MOODS = [
-  { emoji: "😔", label: "Berat"    },
-  { emoji: "😟", label: "Khawatir" },
-  { emoji: "😐", label: "Biasa"    },
-  { emoji: "🙂", label: "Tenang"   },
-  { emoji: "😊", label: "Damai"    },
-];
-
-/* ── Rotating Headline Words ── */
-const ROTATING_WORDS = ["Sendirian.", "Kewalahan.", "Tak Terdengar.", "Tanpa Harapan."];
+import { useLanguage } from "@/lib/i18n/context";
 
 /* ── Breathing phases ── */
 type BreathPhase = { label: string; range: [number, number] };
@@ -43,6 +32,17 @@ const itemVariants = {
 } as const;
 
 export default function HeroSection() {
+  const { t } = useLanguage();
+
+  const MOODS = [
+    { emoji: "😔", label: t.landing.hero.moodLabels[0] },
+    { emoji: "😟", label: t.landing.hero.moodLabels[1] },
+    { emoji: "😐", label: t.landing.hero.moodLabels[2] },
+    { emoji: "🙂", label: t.landing.hero.moodLabels[3] },
+    { emoji: "😊", label: t.landing.hero.moodLabels[4] },
+  ];
+  const ROTATING_WORDS = t.landing.hero.words;
+
   const [selectedMood, setSelectedMood] = useState(2);
   const [wordIndex,    setWordIndex]    = useState(0);
   const [barProgress,  setBarProgress]  = useState(0);
@@ -116,16 +116,15 @@ export default function HeroSection() {
                 >
                   <Heart className="w-3.5 h-3.5 fill-sage-400 text-sage-400" />
                 </motion.span>
-                100% Gratis &nbsp;·&nbsp; Aman &nbsp;·&nbsp; Selalu Ada
+                {t.landing.hero.badge}
               </div>
             </motion.div>
 
             {/* Main Headline */}
             <motion.div variants={itemVariants as import("framer-motion").Variants} className="mb-6">
               <h1 className="font-display text-5xl xl:text-6xl text-forest leading-[1.15] font-semibold">
-                Kamu Tidak Harus{" "}
+                {t.landing.hero.tagline.split("{word}")[0]}
                 <br className="hidden sm:block" />
-                Merasa{" "}
                 <span className="relative inline-block">
                   <AnimatePresence mode="wait">
                     <motion.span
@@ -140,6 +139,7 @@ export default function HeroSection() {
                     </motion.span>
                   </AnimatePresence>
                 </span>
+                {t.landing.hero.tagline.split("{word}")[1]}
               </h1>
             </motion.div>
 
@@ -148,9 +148,7 @@ export default function HeroSection() {
               variants={itemVariants as import("framer-motion").Variants}
               className="text-lg text-muted leading-relaxed mb-10 max-w-lg"
             >
-              RuangTeduh hadir sebagai teman perjalanan kesehatan mentalmu —{" "}
-              <span className="text-forest font-medium">penuh empati, bebas biaya</span>
-              , dan selalu ada saat kamu paling membutuhkan.
+              {t.landing.hero.description}
             </motion.p>
 
             {/* CTA Buttons */}
@@ -164,7 +162,7 @@ export default function HeroSection() {
                   whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  Mulai Gratis Sekarang
+                  {t.landing.hero.cta}
                   <ArrowRight className="w-5 h-5" />
                 </motion.button>
               </Link>
@@ -174,7 +172,7 @@ export default function HeroSection() {
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Lihat Cara Kerja
+                  {t.landing.hero.seeHow}
                 </motion.button>
               </Link>
             </motion.div>
@@ -201,7 +199,7 @@ export default function HeroSection() {
                   ))}
                 </div>
                 <p className="text-sm text-muted">
-                  Dipercaya <span className="font-semibold text-forest">12.400+</span> pengguna
+                  {t.landing.hero.trusted}
                 </p>
               </div>
             </motion.div>
@@ -242,9 +240,9 @@ export default function HeroSection() {
 
                   {/* Greeting */}
                   <div>
-                    <p className="text-xs text-muted">Selamat Pagi ✨</p>
+                    <p className="text-xs text-muted">{t.landing.hero.greeting}</p>
                     <p className="font-display text-sm font-semibold text-forest leading-tight">
-                      Bagaimana perasaanmu hari ini?
+                      {t.landing.hero.howFeel}
                     </p>
                   </div>
 
@@ -276,11 +274,10 @@ export default function HeroSection() {
                   <div className="bg-white rounded-2xl p-3 shadow-[0_2px_12px_-4px_rgba(45,74,53,0.06)]">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className="text-sm">📓</span>
-                      <p className="text-xs font-semibold text-forest">Catatan Hari Ini</p>
+                      <p className="text-xs font-semibold text-forest">{t.landing.hero.journalToday}</p>
                     </div>
                     <p className="text-xs text-muted leading-relaxed line-clamp-2">
-                      Hari ini aku merasa lebih tenang. Latihan pernapasan tadi pagi
-                      benar-benar membantu menurunkan kecemasan...
+                      {t.landing.hero.journalEntry}
                     </p>
                   </div>
 
@@ -289,7 +286,7 @@ export default function HeroSection() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm">🌬️</span>
-                        <p className="text-xs font-semibold text-forest">Latihan Pernapasan</p>
+                        <p className="text-xs font-semibold text-forest">{t.landing.hero.breathing}</p>
                       </div>
                       <AnimatePresence mode="wait">
                         <motion.span
@@ -321,8 +318,8 @@ export default function HeroSection() {
                     >
                       <span className="text-base">💬</span>
                       <div>
-                        <p className="text-xs font-semibold text-forest">Chat AI</p>
-                        <p className="text-[10px] text-muted">Teduh Bot</p>
+                        <p className="text-xs font-semibold text-forest">{t.landing.hero.chatAI}</p>
+                        <p className="text-[10px] text-muted">{t.landing.hero.teduhBot}</p>
                       </div>
                     </motion.div>
                     <motion.div
@@ -331,17 +328,17 @@ export default function HeroSection() {
                     >
                       <span className="text-base">🫂</span>
                       <div>
-                        <p className="text-xs font-semibold text-forest">Komunitas</p>
-                        <p className="text-[10px] text-muted">Anonim & Aman</p>
+                        <p className="text-xs font-semibold text-forest">{t.landing.hero.community}</p>
+                        <p className="text-[10px] text-muted">{t.landing.hero.anonymous}</p>
                       </div>
                     </motion.div>
                   </div>
 
                   {/* Affirmation card */}
                   <div className="bg-sage-500 rounded-2xl p-3 text-white">
-                    <p className="text-[10px] font-medium opacity-75 mb-0.5">✨ Afirmasi Hari Ini</p>
+                    <p className="text-[10px] font-medium opacity-75 mb-0.5">✨ {t.landing.hero.affirmation}</p>
                     <p className="text-xs font-semibold leading-relaxed">
-                      &ldquo;Perasaanmu valid. Kamu sudah melakukan yang terbaik hari ini.&rdquo;
+                      &ldquo;{t.landing.hero.affirmationText}&rdquo;
                     </p>
                   </div>
                 </div>
@@ -359,8 +356,8 @@ export default function HeroSection() {
                   <Users className="w-4 h-4 text-sage-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-forest">Komunitas Aktif</p>
-                  <p className="text-xs text-muted">12.4k+ anggota</p>
+                  <p className="text-xs font-semibold text-forest">{t.landing.hero.activeCommunity}</p>
+                  <p className="text-xs text-muted">{t.landing.hero.communityMembers}</p>
                 </div>
               </motion.div>
 
@@ -370,7 +367,7 @@ export default function HeroSection() {
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
               >
-                <p className="text-[10px] font-semibold text-forest mb-1.5">📈 Mood Minggu Ini</p>
+                <p className="text-[10px] font-semibold text-forest mb-1.5">📈 {t.landing.hero.moodThisWeek}</p>
                 <div className="flex items-end gap-0.5 h-9">
                   {[35, 55, 40, 70, 60, 82, 90].map((h, i) => (
                     <motion.div
@@ -398,10 +395,10 @@ export default function HeroSection() {
                   <div className="w-5 h-5 rounded-full bg-lavender-300 flex items-center justify-center">
                     <Sparkles className="w-2.5 h-2.5 text-white" />
                   </div>
-                  <p className="text-[10px] font-semibold text-forest">Teduh Bot</p>
+                  <p className="text-[10px] font-semibold text-forest">{t.landing.hero.teduhBot}</p>
                 </div>
                 <p className="text-[10px] text-muted leading-relaxed">
-                  &ldquo;Kamu sudah melangkah sejauh ini. Aku bangga padamu 💚&rdquo;
+                  &ldquo;{t.landing.hero.teduhBotResponse}&rdquo;
                 </p>
               </motion.div>
             </motion.div>
@@ -415,7 +412,7 @@ export default function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
         >
-          <p className="text-xs text-muted-light font-medium tracking-wider uppercase">Gulir ke bawah</p>
+          <p className="text-xs text-muted-light font-medium tracking-wider uppercase">{t.landing.hero.scrollDown}</p>
           <motion.div className="w-5 h-8 rounded-full border-2 border-muted-light flex items-start justify-center pt-1">
             <motion.div
               className="w-1.5 h-1.5 bg-muted rounded-full"

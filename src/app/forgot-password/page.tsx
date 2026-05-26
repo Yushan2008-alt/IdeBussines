@@ -5,9 +5,11 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Sprout, ArrowLeft, ArrowRight, AlertCircle, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function ForgotPasswordPage() {
   const supabase = createClient();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +19,7 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError("Email wajib diisi.");
+      setError(t.forgotPassword.validationError);
       return;
     }
     setIsLoading(true);
@@ -82,7 +84,7 @@ export default function ForgotPasswordPage() {
             transition={{ delay: 0.15, duration: 0.5 }}
             className="text-xs font-bold text-sage-600 tracking-[0.18em] uppercase mb-4"
           >
-            Tenang, Kami Bantu
+            {t.forgotPassword.leftTitle}
           </motion.p>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -90,9 +92,16 @@ export default function ForgotPasswordPage() {
             transition={{ delay: 0.25, duration: 0.65 }}
             className="font-display text-3xl xl:text-[2.6rem] font-semibold text-forest leading-snug mb-4"
           >
-            Lupa kata sandi?
-            <br />
-            <span className="gradient-text">Tak masalah.</span>
+            {t.forgotPassword.leftHeading.split("{word}").map((part, i, arr) =>
+              i < arr.length - 1 ? (
+                <span key={i}>
+                  {part}
+                  <span className="gradient-text">Tak masalah.</span>
+                </span>
+              ) : (
+                part
+              )
+            )}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -100,8 +109,7 @@ export default function ForgotPasswordPage() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="text-muted text-[15px] leading-relaxed max-w-sm"
           >
-            Masukkan email terdaftarmu, dan kami akan kirim tautan untuk
-            mereset kata sandi.
+            {t.forgotPassword.leftDesc}
           </motion.p>
         </div>
 
@@ -150,10 +158,10 @@ export default function ForgotPasswordPage() {
 
           <div className="mb-8">
             <h1 className="font-display text-3xl font-semibold text-forest mb-2 leading-tight">
-              Reset Kata Sandi
+              {t.forgotPassword.heading}
             </h1>
             <p className="text-muted text-base">
-              Kami akan kirim tautan ke emailmu.
+              {t.forgotPassword.sub}
             </p>
           </div>
 
@@ -185,7 +193,7 @@ export default function ForgotPasswordPage() {
               >
                 <div className="bg-mint-50 border border-mint-200 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-sage-600 font-medium">
                   <CheckCircle className="w-4 h-4 shrink-0" />
-                  Tautan reset telah dikirim. Periksa kotak masuk emailmu.
+                  {t.forgotPassword.success}
                 </div>
               </motion.div>
             )}
@@ -195,7 +203,7 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label className="text-sm font-semibold text-forest mb-1.5 block">
-                  Email
+                  {t.forgotPassword.emailLabel}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -203,7 +211,7 @@ export default function ForgotPasswordPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="kamu@email.com"
+                    placeholder={t.forgotPassword.emailPlaceholder}
                     autoComplete="email"
                     className="w-full pl-11 pr-4 py-3.5 bg-white border border-border rounded-2xl text-sm text-forest placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-sage-200 focus:border-sage-300 transition-all font-medium shadow-sm"
                   />
@@ -224,11 +232,11 @@ export default function ForgotPasswordPage() {
                       transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }}
                       className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                     />
-                    Mengirim...
+                    {t.forgotPassword.sending}
                   </>
                 ) : (
                   <>
-                    Kirim Tautan Reset <ArrowRight className="w-4 h-4" />
+                    {t.forgotPassword.send} <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </motion.button>
@@ -240,7 +248,7 @@ export default function ForgotPasswordPage() {
               whileTap={{ scale: 0.97 }}
               className="w-full border border-border bg-white hover:bg-sage-50 text-forest font-semibold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
             >
-              Kirim ulang ke email lain
+              {t.forgotPassword.resend}
             </motion.button>
           )}
 
@@ -249,7 +257,7 @@ export default function ForgotPasswordPage() {
               href="/login"
               className="text-sage-600 font-bold hover:text-sage-700 transition-colors inline-flex items-center gap-1"
             >
-              <ArrowLeft className="w-4 h-4" /> Kembali ke masuk
+              <ArrowLeft className="w-4 h-4" /> {t.forgotPassword.backToLogin}
             </Link>
           </p>
 

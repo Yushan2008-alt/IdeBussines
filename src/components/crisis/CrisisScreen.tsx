@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logCrisisEvent } from '@/lib/actions/crisis';
 import { Phone, Wind, Heart, ShieldCheck, ExternalLink, ChevronDown } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/context';
 
 interface Hotline {
   id: string;
@@ -23,9 +24,15 @@ interface Props {
   matchedKeywords?: string[];
 }
 
-const BREATH_PHASES = ['Tarik napas...', 'Tahan...', 'Hembuskan...', 'Istirahat...'] as const;
+const BREATH_PHASES = [
+  'Tarik napas...',
+  'Tahan...',
+  'Hembuskan...',
+  'Istirahat...',
+] as const;
 
 export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeywords }: Props) {
+  const { t } = useLanguage();
   const [showAll, setShowAll] = useState(false);
   const [breathing, setBreathing] = useState(false);
   const [breathIdx, setBreathIdx] = useState(0);
@@ -85,11 +92,10 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
           </motion.div>
 
           <h1 className="font-display text-3xl font-semibold text-forest md:text-4xl leading-snug mb-3">
-            Kamu tidak sendirian.
+            {t.bantuan.heading}
           </h1>
           <p className="text-muted text-base leading-relaxed mx-auto max-w-md">
-            Kalau kamu sedang merasa berat, ada orang yang siap mendengarkan kamu sekarang —{' '}
-            <span className="font-semibold text-forest">tanpa biaya, tanpa syarat.</span>
+            {t.bantuan.sub}
           </p>
         </motion.div>
 
@@ -112,8 +118,8 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
               <Phone className="h-6 w-6 fill-white/20" />
             </motion.div>
             <div className="text-left">
-              <p className="font-bold text-lg leading-tight">Telepon Darurat Nasional — 112</p>
-              <p className="text-sm text-white/80 font-medium">Gratis · 24 jam · Dari mana saja</p>
+              <p className="font-bold text-lg leading-tight">{t.bantuan.callEmergency}</p>
+              <p className="text-sm text-white/80 font-medium">{t.bantuan.callSub}</p>
             </div>
           </a>
         </motion.div>
@@ -123,13 +129,13 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
-          aria-label="Daftar hotline"
+          aria-label={t.bantuan.hotlineSection}
           className="mb-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs font-bold text-muted-light uppercase tracking-widest">
-              Hotline Tersedia
+              {t.bantuan.hotlineSection}
             </span>
             <div className="h-px flex-1 bg-border" />
           </div>
@@ -166,7 +172,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
               onClick={() => setShowAll((v) => !v)}
               className="mt-4 flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-muted hover:text-forest transition-colors rounded-2xl hover:bg-sage-50"
             >
-              {showAll ? 'Tutup' : `Lihat ${hotlines.length - 3} hotline lainnya`}
+              {showAll ? t.bantuan.showLess : t.bantuan.showMore.replace('{n}', String(hotlines.length - 3))}
               <motion.span animate={{ rotate: showAll ? 180 : 0 }} transition={{ duration: 0.25 }}>
                 <ChevronDown className="h-4 w-4" />
               </motion.span>
@@ -184,7 +190,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
           <div className="flex items-center gap-2 mb-4">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs font-bold text-muted-light uppercase tracking-widest">
-              Sambil Menunggu
+              {t.bantuan.whileWaiting}
             </span>
             <div className="h-px flex-1 bg-border" />
           </div>
@@ -194,7 +200,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
             <div className="bg-white rounded-[2.5rem] p-6 border border-border shadow-[0_4px_20px_-8px_rgba(45,74,53,0.04)] text-center">
               <div className="flex items-center justify-center gap-2 text-muted mb-4">
                 <Wind className="h-4 w-4" />
-                <span className="font-semibold text-sm">Latihan Pernapasan</span>
+                <span className="font-semibold text-sm">{t.bantuan.breathing}</span>
               </div>
 
               <div className="relative mx-auto mb-4 flex h-28 w-28 items-center justify-center">
@@ -220,7 +226,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
                   transition={{ duration: 0.25 }}
                   className="text-lavender-500 font-bold text-sm min-h-[1.5rem] mb-4"
                 >
-                  {breathing ? BREATH_PHASES[breathIdx] : 'Siap untuk mulai?'}
+                  {breathing ? BREATH_PHASES[breathIdx] : t.bantuan.breathingIdle}
                 </motion.p>
               </AnimatePresence>
 
@@ -232,7 +238,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
                     : 'bg-lavender-400 text-white hover:bg-lavender-500 shadow-[0_4px_14px_-4px_rgba(165,145,204,0.5)]'
                 }`}
               >
-                {breathing ? 'Hentikan' : 'Mulai Bernapas'}
+                {breathing ? t.bantuan.stopBreath : t.bantuan.startBreath}
               </button>
             </div>
 
@@ -241,22 +247,22 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <ShieldCheck className="h-4 w-4 text-sage-500" />
-                  <span className="font-semibold text-sm text-forest">Safety Plan</span>
+                  <span className="font-semibold text-sm text-forest">{t.bantuan.safetyPlan}</span>
                 </div>
                 <p className="text-sm text-muted leading-relaxed mb-4">
-                  Ingatkan dirimu tentang tanda peringatan, strategi koping, dan kontak darurat yang sudah kamu siapkan.
+                  {t.bantuan.safetyPlanDesc}
                 </p>
               </div>
               <Link
                 href="/dashboard?tab=safety"
                 className="inline-flex items-center justify-center gap-2 w-full bg-sage-50 hover:bg-sage-100 text-forest font-semibold text-sm py-3 rounded-full border border-border transition-colors"
               >
-                Buka Safety Planku <ShieldCheck className="h-4 w-4" />
+                {t.bantuan.openPlan} <ShieldCheck className="h-4 w-4" />
               </Link>
 
               <div className="mt-4 pt-4 border-t border-border">
                 <p className="text-xs text-muted-light italic leading-relaxed text-center">
-                  &ldquo;Kamu lebih kuat dari yang kamu kira. Bertahanlah.&rdquo;
+                  &ldquo;{t.bantuan.affirmation}&rdquo;
                 </p>
               </div>
             </div>
@@ -270,9 +276,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
           transition={{ delay: 0.6, duration: 0.5 }}
           className="text-center text-xs text-muted-light leading-relaxed"
         >
-          Hidupmu berharga. Kamu layak untuk mendapatkan pertolongan.
-          <br />
-          <span className="font-semibold text-forest">Kamu tidak sendiri.</span>
+          {t.bantuan.footer}
         </motion.p>
 
         {/* ── Back to dashboard ── */}
@@ -286,7 +290,7 @@ export function CrisisScreen({ hotlines, triggerSource, severity, matchedKeyword
             href="/dashboard"
             className="text-xs text-muted hover:text-forest font-semibold underline transition-colors"
           >
-            ← Kembali ke Dashboard
+            ← {t.bantuan.back}
           </Link>
         </motion.div>
       </div>

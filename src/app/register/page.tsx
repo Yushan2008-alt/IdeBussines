@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapOAuthErrorMessage } from "@/lib/auth/oauth";
+import { useLanguage } from "@/lib/i18n/context";
+import type { Translations } from "@/lib/i18n/types";
 
 /* ══════════════════════════════════════════════════════════
    SUPABASE-READY TYPES  (PRD Bagian 7 — Data Model)
@@ -196,11 +198,12 @@ interface Step1Props {
   onNext:     () => void;
   onGoogle:   () => void;
   isGoogleLoading: boolean;
+  t:          Translations;
 }
 
 function Step1({
   form, errors, showPw, showCPw,
-  setShowPw, setShowCPw, update, clearError, onNext, onGoogle, isGoogleLoading,
+  setShowPw, setShowCPw, update, clearError, onNext, onGoogle, isGoogleLoading, t,
 }: Step1Props) {
   const inputClass = (errKey: keyof FormErrors, extra = "") =>
     `w-full py-3.5 bg-white border rounded-2xl text-sm text-forest placeholder:text-muted-light focus:outline-none focus:ring-2 transition-all font-medium shadow-sm ${extra} ${
@@ -212,7 +215,7 @@ function Step1({
   return (
     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(45,74,53,0.1)] border border-border/50">
       <h1 className="font-display text-2xl font-semibold text-forest mb-1">
-        Buat Akunmu 🌱
+        {t.auth.register} 🌱
       </h1>
       <p className="text-muted text-sm mb-7">
         Gratis selamanya. Tidak ada kartu kredit yang dibutuhkan.
@@ -222,7 +225,7 @@ function Step1({
         {/* Full name */}
         <div>
           <label className="text-sm font-semibold text-forest mb-1.5 block">
-            Nama Lengkap
+            {t.auth.fullName}
           </label>
           <div className="relative">
             <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -243,7 +246,7 @@ function Step1({
         {/* Email */}
         <div>
           <label className="text-sm font-semibold text-forest mb-1.5 block">
-            Email
+            {t.auth.email}
           </label>
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -264,7 +267,7 @@ function Step1({
         {/* Password */}
         <div>
           <label className="text-sm font-semibold text-forest mb-1.5 block">
-            Kata Sandi
+            {t.auth.password}
           </label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -294,7 +297,7 @@ function Step1({
         {/* Confirm password */}
         <div>
           <label className="text-sm font-semibold text-forest mb-1.5 block">
-            Konfirmasi Kata Sandi
+            {t.auth.confirmPassword}
           </label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -327,7 +330,7 @@ function Step1({
           whileTap={{ scale: 0.97 }}
           className="w-full bg-sage-500 hover:bg-sage-600 text-white font-bold py-4 rounded-2xl transition-all shadow-[0_6px_20px_-6px_rgba(109,148,116,0.45)] flex items-center justify-center gap-2 mt-2"
         >
-          Lanjutkan <ArrowRight className="w-4 h-4" />
+          {t.common.next} <ArrowRight className="w-4 h-4" />
         </motion.button>
 
         {/* Divider */}
@@ -348,14 +351,14 @@ function Step1({
           <div className="w-5 h-5 rounded-full bg-[#4285F4] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
             G
           </div>
-          {isGoogleLoading ? "Memproses Google..." : "Daftar dengan Google"}
+          {isGoogleLoading ? `Memproses ${t.auth.register}...` : `${t.auth.register} dengan Google`}
         </motion.button>
 
         <p className="text-center text-xs text-muted-light leading-relaxed">
           Dengan mendaftar, kamu menyetujui{" "}
-          <a href="#" className="text-sage-600 font-semibold hover:underline">Kebijakan Privasi</a>{" "}
+          <a href="#" className="text-sage-600 font-semibold hover:underline">{t.auth.privacy}</a>{" "}
           dan{" "}
-          <a href="#" className="text-sage-600 font-semibold hover:underline">Syarat Layanan</a>{" "}
+          <a href="#" className="text-sage-600 font-semibold hover:underline">{t.auth.terms}</a>{" "}
           kami.
         </p>
       </div>
@@ -373,9 +376,10 @@ interface Step2Props {
   onBack:     () => void;
   onSubmit:   () => void;
   isLoading:  boolean;
+  t:          Translations;
 }
 
-function Step2({ form, errors, toggleGoal, onBack, onSubmit, isLoading }: Step2Props) {
+function Step2({ form, errors, toggleGoal, onBack, onSubmit, isLoading, t }: Step2Props) {
   return (
     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_8px_40px_-12px_rgba(45,74,53,0.1)] border border-border/50">
       <h2 className="font-display text-2xl font-semibold text-forest mb-1">
@@ -445,7 +449,7 @@ function Step2({ form, errors, toggleGoal, onBack, onSubmit, isLoading }: Step2P
           className="flex items-center gap-2 px-5 py-3.5 rounded-2xl border border-border text-muted font-semibold text-sm hover:bg-sage-50 hover:text-forest transition-all shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
-          Kembali
+          {t.common.back}
         </motion.button>
         <motion.button
           onClick={onSubmit}
@@ -461,10 +465,10 @@ function Step2({ form, errors, toggleGoal, onBack, onSubmit, isLoading }: Step2P
                 transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }}
                 className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
               />
-              Membuat akun...
+              {t.auth.register}...
             </>
           ) : (
-            <>Daftar Sekarang ✨</>
+            <>{t.auth.register} ✨</>
           )}
         </motion.button>
       </div>
@@ -475,7 +479,12 @@ function Step2({ form, errors, toggleGoal, onBack, onSubmit, isLoading }: Step2P
 /* ══════════════════════════════════════════════════════════
    STEP 3: Welcome Screen
 ══════════════════════════════════════════════════════════ */
-function Step3({ fullName }: { fullName: string }) {
+interface Step3Props {
+  fullName: string;
+  t:        Translations;
+}
+
+function Step3({ fullName, t }: Step3Props) {
   const router = useRouter();
   return (
     <div className="text-center py-6 px-4">
@@ -544,12 +553,12 @@ function Step3({ fullName }: { fullName: string }) {
         className="mt-6 py-4 px-5 bg-peach-50/60 border border-peach-100 rounded-2xl text-center"
       >
         <p className="text-xs text-muted leading-relaxed">
-          Butuh bantuan segera?{" "}
+          {t.common.crisis.needHelp}{" "}
           <a
             href="tel:119"
             className="text-peach-500 font-bold hover:underline"
           >
-            119 ext 8
+            {t.common.crisis.hotline}
           </a>{" "}
           · Into The Light Indonesia · 24 jam · Gratis
         </p>
@@ -572,6 +581,7 @@ const stepVariants = {
 ══════════════════════════════════════════════════════════ */
 export default function RegisterPage() {
   const supabase = createClient();
+  const { t } = useLanguage();
 
   const [step,      setStep]      = useState(1);
   const [direction, setDirection] = useState(1);
@@ -599,10 +609,10 @@ export default function RegisterPage() {
   /* ── Step 1 validation ── */
   const validateStep1 = (): boolean => {
     const e: FormErrors = {};
-    if (!form.full_name.trim())                    e.full_name        = "Nama wajib diisi.";
-    if (!isValidEmail(form.email))                 e.email            = "Format email tidak valid.";
-    if (form.password.length < 8)                  e.password         = "Kata sandi minimal 8 karakter.";
-    if (form.password !== form.confirm_password)   e.confirm_password = "Kata sandi tidak cocok.";
+    if (!form.full_name.trim())                    e.full_name        = t.auth.nameRequired;
+    if (!isValidEmail(form.email))                 e.email            = t.auth.invalidEmail;
+    if (form.password.length < 8)                  e.password         = t.auth.invalidPassword;
+    if (form.password !== form.confirm_password)   e.confirm_password = t.auth.passwordMismatch;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -633,7 +643,7 @@ export default function RegisterPage() {
     if (authError) {
       const msg =
         authError.message === "User already registered"
-          ? "Email ini sudah terdaftar. Silakan masuk."
+          ? t.auth.alreadyRegistered
           : authError.message;
       setErrors({ goals: msg });
       setIsLoading(false);
@@ -739,7 +749,7 @@ export default function RegisterPage() {
           href="/login"
           className="text-sm text-muted font-semibold hover:text-forest transition-colors"
         >
-          Sudah punya akun? <span className="text-sage-600">Masuk</span>
+          {t.auth.hasAccount} <span className="text-sage-600">{t.auth.login}</span>
         </Link>
       </div>
 
@@ -771,6 +781,7 @@ export default function RegisterPage() {
                   onNext={handleNext}
                   onGoogle={handleGoogle}
                   isGoogleLoading={isGoogleLoading}
+                  t={t}
                 />
               )}
               {step === 2 && (
@@ -781,10 +792,11 @@ export default function RegisterPage() {
                   onBack={() => goTo(1)}
                   onSubmit={handleRegister}
                   isLoading={isLoading}
+                  t={t}
                 />
               )}
               {step === 3 && (
-                <Step3 fullName={form.full_name} />
+                <Step3 fullName={form.full_name} t={t} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -798,12 +810,12 @@ export default function RegisterPage() {
             transition={{ delay: 0.3 }}
             className="text-center text-sm text-muted mt-6"
           >
-            Sudah punya akun?{" "}
+            {t.auth.hasAccount}{" "}
             <Link
               href="/login"
               className="text-sage-600 font-bold hover:text-sage-700 transition-colors"
             >
-              Masuk sekarang
+              {t.auth.login} sekarang
             </Link>
           </motion.p>
         )}
@@ -817,12 +829,12 @@ export default function RegisterPage() {
             className="mt-4 py-3 px-4 bg-peach-50/60 border border-peach-100 rounded-2xl text-center"
           >
             <p className="text-xs text-muted leading-relaxed">
-              Dalam krisis?{" "}
+              {t.common.crisis.crisisNow}{" "}
               <a
                 href="tel:119"
                 className="text-peach-500 font-bold hover:underline"
               >
-                119 ext 8
+                {t.common.crisis.hotline}
               </a>{" "}
               · Into The Light Indonesia · 24 jam · Gratis
             </p>

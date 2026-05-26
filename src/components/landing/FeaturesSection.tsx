@@ -6,110 +6,18 @@ import {
   BookOpen, MessageCircle, Phone, Users,
   Wind, ShieldCheck, CalendarHeart, Sparkles, Library,
 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/context";
 
 interface Feature {
   icon:        React.ElementType;
   title:       string;
   description: string;
   tag:         string;
-  color:       string;   /* bg color for icon wrapper */
-  iconColor:   string;   /* icon stroke color */
-  cardBg:      string;   /* card bg */
-  size:        "normal" | "wide" | "tall"; /* layout variety */
+  color:       string;
+  iconColor:   string;
+  cardBg:      string;
+  size:        "normal" | "wide" | "tall";
 }
-
-const FEATURES: Feature[] = [
-  {
-    icon:        BookOpen,
-    title:       "Mood Journal & Tracker",
-    description: "Catat perasaan harianmu dengan mood wheel interaktif. Lihat pola emosimu selama seminggu dan dapatkan insight dari AI yang empatik.",
-    tag:         "Fitur Inti",
-    color:       "bg-sage-100",
-    iconColor:   "text-sage-600",
-    cardBg:      "bg-sage-50",
-    size:        "normal",
-  },
-  {
-    icon:        MessageCircle,
-    title:       "Teduh Bot — AI Companion",
-    description: "Teman bicara 24/7 berbasis AI. Tidak menghakimi, selalu ada, dan berbicara dalam Bahasa Indonesia yang hangat dan manusiawi.",
-    tag:         "AI-Powered",
-    color:       "bg-lavender-100",
-    iconColor:   "text-lavender-500",
-    cardBg:      "bg-lavender-50",
-    size:        "wide",
-  },
-  {
-    icon:        Phone,
-    title:       "Crisis SOS",
-    description: "Satu tombol menghubungkanmu langsung ke hotline darurat nyata: Into The Light (119 ext 8), Yayasan Pulih, dan lainnya. Respons dalam hitungan detik.",
-    tag:         "🚨 Keselamatan",
-    color:       "bg-peach-100",
-    iconColor:   "text-peach-500",
-    cardBg:      "bg-peach-50",
-    size:        "normal",
-  },
-  {
-    icon:        Users,
-    title:       "Ruang Cerita — Komunitas Anonim",
-    description: "Berbagi cerita, memberi dan menerima dukungan dalam komunitas yang aman, anonim, dan bebas penghakiman.",
-    tag:         "Komunitas",
-    color:       "bg-sky-100",
-    iconColor:   "text-sky-400",
-    cardBg:      "bg-sky-50",
-    size:        "normal",
-  },
-  {
-    icon:        Wind,
-    title:       "Guided Breathing & Grounding",
-    description: "Teknik 4-7-8 breathing, box breathing, dan 5-4-3-2-1 grounding yang dipandu. Tenangkan sistem saraf dalam 5 menit.",
-    tag:         "Mindfulness",
-    color:       "bg-mint-100",
-    iconColor:   "text-sage-500",
-    cardBg:      "bg-mint-50",
-    size:        "normal",
-  },
-  {
-    icon:        ShieldCheck,
-    title:       "Safety Plan Builder",
-    description: "Buat rencana keselamatan personalmu: kenali tanda peringatan, strategi coping, dan kontak darurat. Disimpan aman dan bisa diakses kapan saja.",
-    tag:         "Keselamatan",
-    color:       "bg-sage-100",
-    iconColor:   "text-sage-700",
-    cardBg:      "bg-white",
-    size:        "wide",
-  },
-  {
-    icon:        CalendarHeart,
-    title:       "Konsultasi Profesional",
-    description: "Terhubung dengan psikolog dan konselor berlisensi. Jadwalkan sesi online kapan dan di mana pun.",
-    tag:         "Coming Soon ✦",
-    color:       "bg-lavender-100",
-    iconColor:   "text-lavender-600",
-    cardBg:      "bg-white",
-    size:        "normal",
-  },
-  {
-    icon:        Sparkles,
-    title:       "Afirmasi & Micro-Challenges",
-    description: "Mulai harimu dengan afirmasi positif dan tantangan kecil yang dirancang untuk membangun ketahanan mental secara bertahap.",
-    tag:         "Daily Habit",
-    color:       "bg-peach-100",
-    iconColor:   "text-peach-400",
-    cardBg:      "bg-white",
-    size:        "normal",
-  },
-  {
-    icon:        Library,
-    title:       "Resource Library",
-    description: "Ratusan artikel, video, dan panduan psikoedukatif yang dikurasi oleh profesional. Gratis, selalu diperbarui.",
-    tag:         "Edukasi",
-    color:       "bg-sky-100",
-    iconColor:   "text-sky-400",
-    cardBg:      "bg-white",
-    size:        "normal",
-  },
-];
 
 const containerVariants = {
   hidden:  {},
@@ -133,26 +41,21 @@ function FeatureCard({ feature }: { feature: Feature }) {
         ${feature.size === "tall" ? "md:row-span-2" : ""}
       `}
     >
-      {/* Soft background blob on hover */}
       <div className={`absolute -bottom-8 -right-8 w-32 h-32 rounded-full ${feature.color} opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-xl`} />
 
       <div className="relative z-10">
-        {/* Icon */}
         <div className={`w-12 h-12 rounded-2xl ${feature.color} flex items-center justify-center mb-4 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8)]`}>
           <Icon className={`w-5 h-5 ${feature.iconColor}`} strokeWidth={1.8} />
         </div>
 
-        {/* Tag */}
         <span className="inline-block text-xs font-semibold text-muted bg-white/70 border border-border rounded-full px-2.5 py-0.5 mb-3">
           {feature.tag}
         </span>
 
-        {/* Title */}
         <h3 className="font-display text-lg font-semibold text-forest mb-2 leading-snug">
           {feature.title}
         </h3>
 
-        {/* Description */}
         <p className="text-sm text-muted leading-relaxed">
           {feature.description}
         </p>
@@ -162,8 +65,102 @@ function FeatureCard({ feature }: { feature: Feature }) {
 }
 
 export default function FeaturesSection() {
+  const { t } = useLanguage();
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  const FEATURES: Feature[] = [
+    {
+      icon:        BookOpen,
+      title:       t.landing.features.items.moodJournal[0],
+      description: t.landing.features.items.moodJournal[1],
+      tag:         t.landing.features.items.moodJournal[2],
+      color:       "bg-sage-100",
+      iconColor:   "text-sage-600",
+      cardBg:      "bg-sage-50",
+      size:        "normal",
+    },
+    {
+      icon:        MessageCircle,
+      title:       t.landing.features.items.teduhBot[0],
+      description: t.landing.features.items.teduhBot[1],
+      tag:         t.landing.features.items.teduhBot[2],
+      color:       "bg-lavender-100",
+      iconColor:   "text-lavender-500",
+      cardBg:      "bg-lavender-50",
+      size:        "wide",
+    },
+    {
+      icon:        Phone,
+      title:       t.landing.features.items.crisisSOS[0],
+      description: t.landing.features.items.crisisSOS[1],
+      tag:         t.landing.features.items.crisisSOS[2],
+      color:       "bg-peach-100",
+      iconColor:   "text-peach-500",
+      cardBg:      "bg-peach-50",
+      size:        "normal",
+    },
+    {
+      icon:        Users,
+      title:       t.landing.features.items.komunitas[0],
+      description: t.landing.features.items.komunitas[1],
+      tag:         t.landing.features.items.komunitas[2],
+      color:       "bg-sky-100",
+      iconColor:   "text-sky-400",
+      cardBg:      "bg-sky-50",
+      size:        "normal",
+    },
+    {
+      icon:        Wind,
+      title:       t.landing.features.items.breathing[0],
+      description: t.landing.features.items.breathing[1],
+      tag:         t.landing.features.items.breathing[2],
+      color:       "bg-mint-100",
+      iconColor:   "text-sage-500",
+      cardBg:      "bg-mint-50",
+      size:        "normal",
+    },
+    {
+      icon:        ShieldCheck,
+      title:       t.landing.features.items.safetyPlan[0],
+      description: t.landing.features.items.safetyPlan[1],
+      tag:         t.landing.features.items.safetyPlan[2],
+      color:       "bg-sage-100",
+      iconColor:   "text-sage-700",
+      cardBg:      "bg-white",
+      size:        "wide",
+    },
+    {
+      icon:        CalendarHeart,
+      title:       t.landing.features.items.konsultasi[0],
+      description: t.landing.features.items.konsultasi[1],
+      tag:         t.landing.features.items.konsultasi[2],
+      color:       "bg-lavender-100",
+      iconColor:   "text-lavender-600",
+      cardBg:      "bg-white",
+      size:        "normal",
+    },
+    {
+      icon:        Sparkles,
+      title:       t.landing.features.items.afirmasi[0],
+      description: t.landing.features.items.afirmasi[1],
+      tag:         t.landing.features.items.afirmasi[2],
+      color:       "bg-peach-100",
+      iconColor:   "text-peach-400",
+      cardBg:      "bg-white",
+      size:        "normal",
+    },
+    {
+      icon:        Library,
+      title:       t.landing.features.items.resource[0],
+      description: t.landing.features.items.resource[1],
+      tag:         t.landing.features.items.resource[2],
+      color:       "bg-sky-100",
+      iconColor:   "text-sky-400",
+      cardBg:      "bg-white",
+      size:        "normal",
+    },
+  ];
 
   return (
     <section id="features" className="py-28 bg-cream relative">
@@ -178,16 +175,13 @@ export default function FeaturesSection() {
           className="text-center mb-16"
         >
           <p className="text-sm font-semibold text-sage-600 tracking-widest uppercase mb-3">
-            9 Fitur Utama
+            {t.landing.features.title}
           </p>
           <h2 className="font-display text-4xl xl:text-5xl text-forest font-semibold leading-tight mb-4">
-            Semua yang Kamu Butuhkan,
-            <br />
-            <span className="gradient-text">Dalam Satu Ruang</span>
+            {t.landing.features.heading}
           </h2>
           <p className="text-muted text-lg max-w-xl mx-auto leading-relaxed">
-            Dari catatan harian hingga krisis darurat — RuangTeduh dirancang
-            untuk menemanimu di setiap titik perjalanan.
+            {t.landing.features.description}
           </p>
         </motion.div>
 
@@ -211,7 +205,7 @@ export default function FeaturesSection() {
           className="text-center mt-14"
         >
           <p className="text-muted text-sm mb-4">
-            Semua fitur di atas tersedia secara penuh, tanpa langganan, tanpa biaya tersembunyi.
+            {t.landing.features.note}
           </p>
           <motion.a
             href="/dashboard"
@@ -219,7 +213,7 @@ export default function FeaturesSection() {
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.97 }}
           >
-            Coba Semua Fitur — Gratis ✨
+            {t.landing.features.cta}
           </motion.a>
         </motion.div>
       </div>

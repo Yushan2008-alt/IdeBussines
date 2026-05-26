@@ -9,28 +9,16 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mapOAuthErrorMessage } from "@/lib/auth/oauth";
+import { useLanguage } from "@/lib/i18n/context";
 
-/* ══════════════════════════════════════════════════════════
-   TYPES
-══════════════════════════════════════════════════════════ */
 interface LoginCredentials {
-  email:       string;   // → auth.users.email
-  password:    string;   // → auth.users (hashed by Supabase)
-  remember_me: boolean;  // → Supabase session persistence setting
+  email:       string;
+  password:    string;
+  remember_me: boolean;
 }
 
-/* ══════════════════════════════════════════════════════════
-   STATIC CONTENT
-══════════════════════════════════════════════════════════ */
-const MINI_QUOTES = [
-  { text: "Akhirnya ada ruang aman yang benar-benar memahami perasaanku.", author: "Anisa R., 23" },
-  { text: "Teduh Bot menemaniku saat tengah malam tanpa pernah menghakimi.", author: "Rizal M., 28" },
-] as const;
-
-/* ══════════════════════════════════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════════════════════════════════ */
 export default function LoginPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const supabase = createClient();
 
@@ -45,11 +33,10 @@ export default function LoginPage() {
   const update = <K extends keyof LoginCredentials>(key: K, val: LoginCredentials[K]) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
-  /* ── Email/Password sign-in ────────────────────────────── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      setError("Email dan kata sandi wajib diisi.");
+      setError(t.auth.invalidEmail);
       return;
     }
     setIsLoading(true);
@@ -61,24 +48,21 @@ export default function LoginPage() {
     });
 
     if (authError) {
-      // Map common Supabase error codes to user-friendly Indonesian messages
       const msg =
         authError.message === "Invalid login credentials"
-          ? "Email atau kata sandi salah. Silakan periksa kembali."
+          ? t.auth.invalidCredentials
           : authError.message === "Email not confirmed"
-          ? "Akun belum dikonfirmasi. Periksa emailmu untuk tautan verifikasi."
+          ? t.auth.emailNotConfirmed
           : authError.message;
       setError(msg);
       setIsLoading(false);
       return;
     }
 
-    // Refresh the router so middleware sees the new session cookie
     router.refresh();
     router.push("/dashboard");
   };
 
-  /* ── Google OAuth sign-in ──────────────────────────────── */
   const handleGoogle = async () => {
     setError(null);
     setIsGoogleLoading(true);
@@ -100,27 +84,29 @@ export default function LoginPage() {
         return;
       }
 
-      setError("Gagal memulai autentikasi Google. Coba lagi beberapa saat.");
+      setError(t.auth.invalidCredentials);
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat menghubungkan dengan Google. Pastikan pop-up tidak diblokir, lalu coba lagi atau gunakan login email.";
+      const message = err instanceof Error ? err.message : t.auth.invalidCredentials;
       setError(mapOAuthErrorMessage(message));
     } finally {
       setIsGoogleLoading(false);
     }
   };
 
+  const miniQuotes = t.landing.testimonials.items;
+  const miniQuoteEntries = [
+    { text: miniQuotes.quote1[0], author: miniQuotes.quote1[2] },
+    { text: miniQuotes.quote2[0], author: miniQuotes.quote2[2] },
+  ];
+
   return (
     <div className="min-h-screen flex bg-cream overflow-hidden">
 
-      {/* ══ LEFT BRANDING PANEL (desktop only) ══ */}
+      {/* ══ LEFT BRANDING PANEL ══ */}
       <div
         className="hidden lg:flex lg:w-[46%] relative flex-col justify-between overflow-hidden p-12"
         style={{ background: "linear-gradient(145deg, #EFF5F1 0%, #F3F1FB 60%, #FDF6F1 100%)" }}
       >
-        {/* Background blobs */}
         <motion.div
           className="absolute -top-28 -left-24 w-[400px] h-[400px] blob-1 bg-sage-200/60 pointer-events-none"
           animate={{ scale: [1, 1.07, 1], rotate: [0, 6, 0] }}
@@ -163,7 +149,7 @@ export default function LoginPage() {
               transition={{ delay: 0.15, duration: 0.5 }}
               className="text-xs font-bold text-sage-600 tracking-[0.18em] uppercase mb-4"
             >
-              Selamat Datang Kembali
+              {t.landing.stats.title}
             </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -171,10 +157,9 @@ export default function LoginPage() {
               transition={{ delay: 0.25, duration: 0.65 }}
               className="font-display text-3xl xl:text-[2.6rem] font-semibold text-forest leading-snug mb-4"
             >
-              Tempat yang aman
+              {t.landing.hero.tagline.split("{word}")[0]}
               <br />
-              untuk{" "}
-              <span className="gradient-text">jiwa yang lelah.</span>
+              <span className="gradient-text">{t.landing.hero.tagline.split("{word}")[1]}</span>
             </motion.h2>
             <motion.p
               initial={{ opacity: 0 }}
@@ -182,14 +167,13 @@ export default function LoginPage() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-muted text-[15px] leading-relaxed max-w-sm"
             >
-              100% gratis · Anonim sepenuhnya · Selalu ada saat kamu
-              paling butuh.
+              {t.landing.hero.description}
             </motion.p>
           </div>
 
           {/* Mini testimonial cards */}
           <div className="space-y-3">
-            {MINI_QUOTES.map((q, i) => (
+            {miniQuoteEntries.map((q, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -24 }}
@@ -224,9 +208,9 @@ export default function LoginPage() {
             ))}
           </div>
           <p className="text-muted text-sm leading-snug">
-            <span className="font-bold text-forest">12.400+ jiwa</span>
+            <span className="font-bold text-forest">{t.landing.hero.trusted}</span>
             <br />
-            sudah bergabung bersama kami
+            {t.landing.hero.communityMembers}
           </p>
         </motion.div>
       </div>
@@ -255,10 +239,10 @@ export default function LoginPage() {
           {/* Heading */}
           <div className="mb-8">
             <h1 className="font-display text-3xl font-semibold text-forest mb-2 leading-tight">
-              Selamat Kembali 👋
+              {t.landing.hero.greeting}
             </h1>
             <p className="text-muted text-base">
-              Ruangmu masih di sini, menunggumu.
+              {t.landing.hero.journalToday}
             </p>
           </div>
 
@@ -286,7 +270,7 @@ export default function LoginPage() {
             {/* Email */}
             <div>
               <label className="text-sm font-semibold text-forest mb-1.5 block">
-                Email
+                {t.auth.email}
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -304,7 +288,7 @@ export default function LoginPage() {
             {/* Password */}
             <div>
               <label className="text-sm font-semibold text-forest mb-1.5 block">
-                Kata Sandi
+                {t.auth.password}
               </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -356,13 +340,13 @@ export default function LoginPage() {
                     </motion.svg>
                   )}
                 </div>
-                <span className="text-sm text-muted font-medium">Ingat saya</span>
+                <span className="text-sm text-muted font-medium">{t.auth.rememberMe}</span>
               </button>
               <Link
                 href="/forgot-password"
                 className="text-sm text-sage-600 font-semibold hover:text-sage-700 transition-colors"
               >
-                Lupa kata sandi?
+                {t.auth.forgotPassword}
               </Link>
             </div>
 
@@ -381,11 +365,11 @@ export default function LoginPage() {
                     transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }}
                     className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                   />
-                  Masuk...
+                  {t.auth.login}...
                 </>
               ) : (
                 <>
-                  Masuk ke Ruangmu <ArrowRight className="w-4 h-4" />
+                  {t.auth.login} <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </motion.button>
@@ -395,7 +379,7 @@ export default function LoginPage() {
           <div className="my-7 flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-muted-light font-semibold uppercase tracking-widest">
-              atau
+              {t.auth.login}
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
@@ -411,31 +395,31 @@ export default function LoginPage() {
             <div className="w-5 h-5 rounded-full bg-[#4285F4] text-white text-[11px] font-bold flex items-center justify-center shrink-0 leading-none">
               G
             </div>
-            {isGoogleLoading ? "Memproses Google..." : "Masuk dengan Google"}
+            {isGoogleLoading ? `${t.auth.login}...` : `${t.auth.login} Google`}
           </motion.button>
 
           {/* Register link */}
           <p className="text-center text-sm text-muted mt-8">
-            Belum punya akun?{" "}
+            {t.auth.noAccount}{" "}
             <Link
               href="/register"
               className="text-sage-600 font-bold hover:text-sage-700 transition-colors"
             >
-              Daftar Gratis →
+              {t.auth.freeRegister} →
             </Link>
           </p>
 
           {/* Crisis footer */}
           <div className="mt-6 py-4 px-5 bg-peach-50/60 border border-peach-100 rounded-2xl text-center">
             <p className="text-xs text-muted leading-relaxed">
-              Dalam krisis sekarang?{" "}
+              {t.common.crisis.crisisNow}{" "}
               <a
                 href="tel:119"
                 className="text-peach-500 font-bold hover:underline"
               >
                 119 ext 8
               </a>{" "}
-              · Into The Light Indonesia · 24 jam · Gratis
+              · {t.common.crisis.hotline}
             </p>
           </div>
         </motion.div>

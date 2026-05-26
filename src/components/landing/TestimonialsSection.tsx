@@ -3,62 +3,76 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Quote, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/context";
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "Aku nggak nyangka ada aplikasi yang bisa bikin aku ngerasa 'dipahami'. Teduh Bot bukan cuma bot — dia jawab dengan cara yang manusiawi banget. Aku mulai nulis jurnal lagi setelah 3 tahun berhenti.",
-    author:     "Pengguna Anonim",
-    role:       "Mahasiswa, 22 tahun",
-    emoji:      "🌱",
-    color:      "bg-sage-50 border-sage-200",
-    quoteColor: "text-sage-500",
-    stars:      5,
-    tag:        "Mood Journal",
-  },
-  {
-    quote:
-      "Waktu aku benar-benar di titik terendah, tombol SOS di RuangTeduh yang menghubungkan aku ke hotline. Sekarang aku sudah jauh lebih baik. Terima kasih sudah hadir di waktu yang tepat.",
-    author:     "Pengguna Anonim",
-    role:       "Pekerja, 28 tahun",
-    emoji:      "💚",
-    color:      "bg-lavender-50 border-lavender-200",
-    quoteColor: "text-lavender-400",
-    stars:      5,
-    tag:        "Crisis SOS",
-  },
-  {
-    quote:
-      "Ruang Cerita jadi tempatku berbagi tanpa takut dihakimi. Ada banyak orang di sana yang ternyata merasakan hal yang sama. Aku nggak merasa sendirian lagi.",
-    author:     "Pengguna Anonim",
-    role:       "Ibu rumah tangga, 34 tahun",
-    emoji:      "🫂",
-    color:      "bg-peach-50 border-peach-200",
-    quoteColor: "text-peach-400",
-    stars:      5,
-    tag:        "Komunitas",
-  },
-  {
-    quote:
-      "Guided breathing-nya benar-benar membantu saat panic attack menyerang di tengah rapat. 5 menit, dan aku bisa kembali tenang. Fitur sesederhana itu terasa seperti penyelamat.",
-    author:     "Pengguna Anonim",
-    role:       "Profesional, 31 tahun",
-    emoji:      "🌬️",
-    color:      "bg-sky-50 border-sky-200",
-    quoteColor: "text-sky-400",
-    stars:      5,
-    tag:        "Breathing Exercise",
-  },
-];
+interface Testimonial {
+  quote:      string;
+  author:     string;
+  role:       string;
+  emoji:      string;
+  color:      string;
+  quoteColor: string;
+  stars:      number;
+  tag:        string;
+}
 
-const SWIPE_THRESHOLD = 50; /* px — minimum drag distance to trigger slide */
+const SWIPE_THRESHOLD = 50;
 
 export default function TestimonialsSection() {
+  const { t } = useLanguage();
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [active,     setActive]     = useState(0);
-  const [direction,  setDirection]  = useState(1); /* 1 = forward, -1 = backward */
+  const [direction,  setDirection]  = useState(1);
   const [isPaused,   setIsPaused]   = useState(false);
+
+  const [q1Quote, q1Author, q1Role, q1Tag] = t.landing.testimonials.items.quote1;
+  const [q2Quote, q2Author, q2Role, q2Tag] = t.landing.testimonials.items.quote2;
+  const [q3Quote, q3Author, q3Role, q3Tag] = t.landing.testimonials.items.quote3;
+  const [q4Quote, q4Author, q4Role, q4Tag] = t.landing.testimonials.items.quote4;
+
+  const TESTIMONIALS: Testimonial[] = [
+    {
+      quote:      q1Quote,
+      author:     q1Author,
+      role:       q1Role,
+      emoji:      "🌱",
+      color:      "bg-sage-50 border-sage-200",
+      quoteColor: "text-sage-500",
+      stars:      5,
+      tag:        q1Tag,
+    },
+    {
+      quote:      q2Quote,
+      author:     q2Author,
+      role:       q2Role,
+      emoji:      "💚",
+      color:      "bg-lavender-50 border-lavender-200",
+      quoteColor: "text-lavender-400",
+      stars:      5,
+      tag:        q2Tag,
+    },
+    {
+      quote:      q3Quote,
+      author:     q3Author,
+      role:       q3Role,
+      emoji:      "🫂",
+      color:      "bg-peach-50 border-peach-200",
+      quoteColor: "text-peach-400",
+      stars:      5,
+      tag:        q3Tag,
+    },
+    {
+      quote:      q4Quote,
+      author:     q4Author,
+      role:       q4Role,
+      emoji:      "🌬️",
+      color:      "bg-sky-50 border-sky-200",
+      quoteColor: "text-sky-400",
+      stars:      5,
+      tag:        q4Tag,
+    },
+  ];
 
   const goTo = (next: number, dir: number) => {
     setDirection(dir);
@@ -107,15 +121,13 @@ export default function TestimonialsSection() {
           className="text-center mb-16"
         >
           <p className="text-sm font-semibold text-lavender-500 tracking-widest uppercase mb-3">
-            Cerita Nyata
+            {t.landing.testimonials.title}
           </p>
           <h2 className="font-display text-4xl xl:text-5xl text-forest font-semibold leading-tight mb-4">
-            Mereka Sudah Merasakan{" "}
-            <span className="gradient-text">Perbedaannya</span>
+            {t.landing.testimonials.heading}
           </h2>
           <p className="text-muted text-lg max-w-lg mx-auto">
-            Setiap testimoni di bawah ini nyata — nama disamarkan atas
-            permintaan pengguna untuk menjaga privasi.
+            {t.landing.testimonials.description}
           </p>
         </motion.div>
 
@@ -126,35 +138,35 @@ export default function TestimonialsSection() {
           transition={{ delay: 0.3 }}
           className="hidden lg:grid grid-cols-4 gap-5"
         >
-          {TESTIMONIALS.map((t, i) => (
+          {TESTIMONIALS.map((tItem, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 32 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.1 + 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -5 }}
-              className={`rounded-3xl border p-6 ${t.color} relative shadow-[0_2px_16px_-6px_rgba(45,74,53,0.08)] flex flex-col`}
+              className={`rounded-3xl border p-6 ${tItem.color} relative shadow-[0_2px_16px_-6px_rgba(45,74,53,0.08)] flex flex-col`}
             >
-              <Quote className={`w-7 h-7 ${t.quoteColor} opacity-50 mb-4`} fill="currentColor" />
+              <Quote className={`w-7 h-7 ${tItem.quoteColor} opacity-50 mb-4`} fill="currentColor" />
               <div className="flex gap-0.5 mb-4">
-                {[...Array(t.stars)].map((_, j) => (
+                {[...Array(tItem.stars)].map((_, j) => (
                   <Star key={j} className="w-3.5 h-3.5 fill-peach-400 text-peach-400" />
                 ))}
               </div>
               <p className="text-sm text-forest leading-relaxed mb-6 italic flex-1">
-                &ldquo;{t.quote}&rdquo;
+                &ldquo;{tItem.quote}&rdquo;
               </p>
               <div className="flex items-center gap-3 mt-auto">
                 <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-xl border border-white/80">
-                  {t.emoji}
+                  {tItem.emoji}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-forest">{t.author}</p>
-                  <p className="text-xs text-muted">{t.role}</p>
+                  <p className="text-xs font-semibold text-forest">{tItem.author}</p>
+                  <p className="text-xs text-muted">{tItem.role}</p>
                 </div>
               </div>
               <span className="absolute top-5 right-5 text-[10px] font-semibold text-muted bg-white/70 border border-white rounded-full px-2.5 py-0.5">
-                {t.tag}
+                {tItem.tag}
               </span>
             </motion.div>
           ))}
@@ -209,7 +221,7 @@ export default function TestimonialsSection() {
                 </div>
                 {/* Swipe hint */}
                 <p className="text-[10px] text-muted mt-4 text-center opacity-60">
-                  Geser untuk melihat lebih banyak →
+                  {t.landing.testimonials.swipe}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -219,7 +231,7 @@ export default function TestimonialsSection() {
           <div className="flex items-center justify-center gap-4 mt-6">
             <button
               onClick={prev}
-              aria-label="Sebelumnya"
+              aria-label={t.landing.testimonials.prev}
               className="w-10 h-10 rounded-full bg-sage-100 hover:bg-sage-200 flex items-center justify-center transition-colors"
             >
               <ChevronLeft className="w-4 h-4 text-forest" />
@@ -238,7 +250,7 @@ export default function TestimonialsSection() {
             </div>
             <button
               onClick={next}
-              aria-label="Berikutnya"
+              aria-label={t.landing.testimonials.next}
               className="w-10 h-10 rounded-full bg-sage-100 hover:bg-sage-200 flex items-center justify-center transition-colors"
             >
               <ChevronRight className="w-4 h-4 text-forest" />
@@ -253,8 +265,7 @@ export default function TestimonialsSection() {
           transition={{ delay: 1 }}
           className="text-center text-xs text-muted-light mt-10"
         >
-          🔒 Semua nama dan identitas disamarkan atas permintaan pengguna.
-          RuangTeduh tidak pernah membagikan data pribadi.
+          {t.landing.testimonials.privacy}
         </motion.p>
       </div>
     </section>

@@ -6,10 +6,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, Sprout, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,11 +32,11 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password || password.length < 8) {
-      setError("Kata sandi minimal 8 karakter.");
+      setError(t.resetPassword.validationMin);
       return;
     }
     if (password !== confirmPassword) {
-      setError("Kata sandi tidak cocok.");
+      setError(t.resetPassword.validationMatch);
       return;
     }
     setIsLoading(true);
@@ -61,9 +63,9 @@ export default function ResetPasswordPage() {
     if (pw.length >= 8) s++;
     if (/[A-Z]/.test(pw)) s++;
     if (/[0-9!@#$%^&*]/.test(pw)) s++;
-    if (s === 1) return { score: 1, label: "Lemah", barColor: "bg-peach-400", textColor: "text-peach-400" };
-    if (s === 2) return { score: 2, label: "Cukup", barColor: "bg-sky-400", textColor: "text-sky-500" };
-    return { score: 3, label: "Kuat 💪", barColor: "bg-sage-500", textColor: "text-sage-600" };
+    if (s === 1) return { score: 1, label: t.resetPassword.weak, barColor: "bg-peach-400", textColor: "text-peach-400" };
+    if (s === 2) return { score: 2, label: t.resetPassword.fair, barColor: "bg-sky-400", textColor: "text-sky-500" };
+    return { score: 3, label: t.resetPassword.strong, barColor: "bg-sage-500", textColor: "text-sage-600" };
   }
 
   const s = getPasswordStrength(password);
@@ -108,7 +110,7 @@ export default function ResetPasswordPage() {
             transition={{ delay: 0.15, duration: 0.5 }}
             className="text-xs font-bold text-sage-600 tracking-[0.18em] uppercase mb-4"
           >
-            Hampir Selesai
+            {t.resetPassword.leftTitle}
           </motion.p>
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -116,9 +118,14 @@ export default function ResetPasswordPage() {
             transition={{ delay: 0.25, duration: 0.65 }}
             className="font-display text-3xl xl:text-[2.6rem] font-semibold text-forest leading-snug mb-4"
           >
-            Buat kata sandi baru.
-            <br />
-            <span className="gradient-text">Kuat dan aman.</span>
+            {t.resetPassword.leftHeading.split(".").map((part, i, arr) =>
+              i < arr.length - 1 ? (
+                <span key={i}>
+                  {part}.<br />
+                  <span className="gradient-text">{arr[i + 1]}</span>
+                </span>
+              ) : null
+            )}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -126,8 +133,7 @@ export default function ResetPasswordPage() {
             transition={{ delay: 0.4, duration: 0.6 }}
             className="text-muted text-[15px] leading-relaxed max-w-sm"
           >
-            Pastikan kata sandimu berbeda dari yang sebelumnya dan mudah
-            kamu ingat.
+            {t.resetPassword.leftDesc}
           </motion.p>
         </div>
 
@@ -176,10 +182,10 @@ export default function ResetPasswordPage() {
 
           <div className="mb-8">
             <h1 className="font-display text-3xl font-semibold text-forest mb-2 leading-tight">
-              Kata Sandi Baru 🔒
+              {t.resetPassword.heading}
             </h1>
             <p className="text-muted text-base">
-              Buat kata sandi yang kuat untuk akunmu.
+              {t.resetPassword.sub}
             </p>
           </div>
 
@@ -211,7 +217,7 @@ export default function ResetPasswordPage() {
               >
                 <div className="bg-mint-50 border border-mint-200 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-sage-600 font-medium">
                   <CheckCircle className="w-4 h-4 shrink-0" />
-                  Kata sandi berhasil diubah! Mengalihkan...
+                  {t.resetPassword.success}
                 </div>
               </motion.div>
             )}
@@ -221,7 +227,7 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label className="text-sm font-semibold text-forest mb-1.5 block">
-                  Kata Sandi Baru
+                  {t.resetPassword.passwordLabel}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -229,7 +235,7 @@ export default function ResetPasswordPage() {
                     type={showPw ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min. 8 karakter"
+                    placeholder={t.resetPassword.passwordPlaceholder}
                     autoComplete="new-password"
                     className="w-full pl-11 pr-12 py-3.5 bg-white border border-border rounded-2xl text-sm text-forest placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-sage-200 focus:border-sage-300 transition-all font-medium shadow-sm"
                   />
@@ -261,7 +267,7 @@ export default function ResetPasswordPage() {
 
               <div>
                 <label className="text-sm font-semibold text-forest mb-1.5 block">
-                  Konfirmasi Kata Sandi
+                  {t.resetPassword.confirmLabel}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
@@ -269,7 +275,7 @@ export default function ResetPasswordPage() {
                     type={showCPw ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Ulangi kata sandi"
+                    placeholder={t.resetPassword.confirmPlaceholder}
                     autoComplete="new-password"
                     className="w-full pl-11 pr-12 py-3.5 bg-white border border-border rounded-2xl text-sm text-forest placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-sage-200 focus:border-sage-300 transition-all font-medium shadow-sm"
                   />
@@ -298,10 +304,10 @@ export default function ResetPasswordPage() {
                       transition={{ duration: 0.85, repeat: Infinity, ease: "linear" }}
                       className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                     />
-                    Menyimpan...
+                    {t.resetPassword.saving}
                   </>
                 ) : (
-                  "Simpan Kata Sandi"
+                  t.resetPassword.save
                 )}
               </motion.button>
             </form>
@@ -312,7 +318,7 @@ export default function ResetPasswordPage() {
               href="/login"
               className="text-sage-600 font-bold hover:text-sage-700 transition-colors"
             >
-              Kembali ke masuk
+              {t.resetPassword.backToLogin}
             </Link>
           </p>
 

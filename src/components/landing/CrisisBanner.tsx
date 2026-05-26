@@ -3,57 +3,75 @@
 import { useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Phone, MessageCircle, Heart, ChevronDown, ExternalLink } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/context";
 
-const HOTLINES = [
-  {
-    name:    "Into The Light Indonesia",
-    org:     "Kemenkes RI",
-    number:  "119 ext 8",
-    href:    "tel:119",
-    desc:    "Krisis & Pencegahan Bunuh Diri — 24 jam",
-    color:   "bg-sage-100 border-sage-200",
-    iconBg:  "bg-sage-500",
-    badge:   "24/7",
-  },
-  {
-    name:    "Yayasan Pulih",
-    org:     "LSM Independen",
-    number:  "(021) 788-42580",
-    href:    "tel:02178842580",
-    desc:    "Pemulihan trauma & dukungan psikologis",
-    color:   "bg-lavender-100 border-lavender-200",
-    iconBg:  "bg-lavender-400",
-    badge:   "Pagi–Sore",
-  },
-  {
-    name:    "Hotline SEJIWA",
-    org:     "Yayasan SEJIWA",
-    number:  "119 ext 8",
-    href:    "tel:119",
-    desc:    "Dukungan remaja & anti-bullying",
-    color:   "bg-sky-100 border-sky-200",
-    iconBg:  "bg-sky-400",
-    badge:   "Remaja",
-  },
-  {
-    name:    "Crisis Text / WA",
-    org:     "Into The Light",
-    number:  "08111-500-454",
-    href:    "https://wa.me/628111500454",
-    desc:    "Kirim pesan WhatsApp kapan saja",
-    color:   "bg-mint-100 border-mint-200",
-    iconBg:  "bg-sage-500",
-    badge:   "WA",
-  },
-];
+interface Hotline {
+  name:    string;
+  org:     string;
+  number:  string;
+  href:    string;
+  desc:    string;
+  color:   string;
+  iconBg:  string;
+  badge:   string;
+}
 
 export default function CrisisBanner() {
+  const { t } = useLanguage();
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const [expanded, setExpanded] = useState(false);
 
+  const [itlName, itlOrg, itlNumber, itlDesc, itlBadge] = t.landing.crisisBanner.hotlines.itl;
+  const [pulihName, pulihOrg, pulihNumber, pulihDesc, pulihBadge] = t.landing.crisisBanner.hotlines.pulih;
+  const [sejiwaName, sejiwaOrg, sejiwaNumber, sejiwaDesc, sejiwaBadge] = t.landing.crisisBanner.hotlines.sejiwa;
+  const [waName, waOrg, waNumber, waDesc, waBadge] = t.landing.crisisBanner.hotlines.wa;
+
+  const HOTLINES: Hotline[] = [
+    {
+      name:    itlName,
+      org:     itlOrg,
+      number:  itlNumber,
+      href:    "tel:119",
+      desc:    itlDesc,
+      color:   "bg-sage-100 border-sage-200",
+      iconBg:  "bg-sage-500",
+      badge:   itlBadge,
+    },
+    {
+      name:    pulihName,
+      org:     pulihOrg,
+      number:  pulihNumber,
+      href:    "tel:02178842580",
+      desc:    pulihDesc,
+      color:   "bg-lavender-100 border-lavender-200",
+      iconBg:  "bg-lavender-400",
+      badge:   pulihBadge,
+    },
+    {
+      name:    sejiwaName,
+      org:     sejiwaOrg,
+      number:  sejiwaNumber,
+      href:    "tel:119",
+      desc:    sejiwaDesc,
+      color:   "bg-sky-100 border-sky-200",
+      iconBg:  "bg-sky-400",
+      badge:   sejiwaBadge,
+    },
+    {
+      name:    waName,
+      org:     waOrg,
+      number:  waNumber,
+      href:    "https://wa.me/628111500454",
+      desc:    waDesc,
+      color:   "bg-mint-100 border-mint-200",
+      iconBg:  "bg-sage-500",
+      badge:   waBadge,
+    },
+  ];
+
   return (
-    <section className="py-20 bg-cream relative overflow-hidden" aria-label="Bantuan darurat kesehatan mental">
+    <section className="py-20 bg-cream relative overflow-hidden" aria-label={t.landing.crisisBanner.heading}>
 
       {/* Decorative top shape */}
       <div className="absolute top-0 left-0 right-0 overflow-hidden leading-none">
@@ -90,11 +108,10 @@ export default function CrisisBanner() {
                 </motion.div>
                 <div>
                   <h2 className="font-display text-2xl md:text-3xl font-semibold text-white leading-snug mb-2">
-                    Apakah Kamu Sedang dalam Krisis?
+                    {t.landing.crisisBanner.heading}
                   </h2>
                   <p className="text-sage-200 text-base leading-relaxed max-w-xl">
-                    Kamu tidak harus menanggungnya sendirian. Ada orang yang terlatih dan
-                    siap mendengarkanmu sekarang — <span className="text-white font-semibold">tanpa biaya, tanpa syarat</span>.
+                    {t.landing.crisisBanner.description}
                   </p>
                 </div>
               </div>
@@ -114,7 +131,7 @@ export default function CrisisBanner() {
                   >
                     <Phone className="w-5 h-5" />
                   </motion.div>
-                  Telepon Sekarang — 119 ext 8
+                  {t.landing.crisisBanner.callNow}
                 </motion.a>
                 <motion.a
                   href="https://wa.me/628111500454"
@@ -125,7 +142,7 @@ export default function CrisisBanner() {
                   whileTap={{ scale: 0.97 }}
                 >
                   <MessageCircle className="w-5 h-5" />
-                  Chat via WhatsApp
+                  {t.landing.crisisBanner.chatWA}
                 </motion.a>
               </div>
 
@@ -135,7 +152,7 @@ export default function CrisisBanner() {
                 className="flex items-center gap-2 text-sage-300 hover:text-white text-sm font-medium transition-colors"
                 aria-expanded={expanded}
               >
-                Lihat semua nomor hotline
+                {t.landing.crisisBanner.viewAll}
                 <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.25 }}>
                   <ChevronDown className="w-4 h-4" />
                 </motion.span>
@@ -187,7 +204,7 @@ export default function CrisisBanner() {
 
               {/* Bottom note */}
               <p className="text-sage-300/70 text-xs mt-6">
-                * Jika kamu berada di luar Indonesia, hubungi layanan darurat setempat atau kunjungi{" "}
+                {t.landing.crisisBanner.note.split("findahelpline.com")[0]}
                 <a
                   href="https://findahelpline.com"
                   target="_blank"

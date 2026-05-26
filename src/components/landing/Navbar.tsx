@@ -4,17 +4,19 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sprout, Menu, X, ArrowRight, Phone } from "lucide-react";
-
-const NAV_LINKS = [
-  { label: "Fitur",     href: "#features" },
-  { label: "Cara Kerja", href: "#how-it-works" },
-  { label: "Komunitas", href: "#testimonials" },
-  { label: "Tentang",   href: "#about" },
-];
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function Navbar() {
+  const { t } = useLanguage();
   const [scrolled,    setScrolled]    = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
+
+  const NAV_LINKS = [
+    { label: t.landing.navbar.features,     href: "#features" },
+    { label: t.landing.navbar.howItWorks,   href: "#how-it-works" },
+    { label: t.landing.navbar.community,    href: "#testimonials" },
+    { label: t.landing.navbar.about,        href: "#about" },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -86,7 +88,7 @@ export default function Navbar() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Masuk
+                  {t.landing.navbar.login}
                 </motion.button>
               </Link>
               <Link href="/dashboard">
@@ -95,7 +97,7 @@ export default function Navbar() {
                   whileHover={{ scale: 1.03, y: -1 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  Daftar Gratis
+                  {t.auth.freeRegister}
                   <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </Link>
@@ -106,7 +108,7 @@ export default function Navbar() {
               className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-sage-50 text-forest transition-colors"
               onClick={() => setMobileOpen((v) => !v)}
               whileTap={{ scale: 0.92 }}
-              aria-label="Toggle menu"
+              aria-label={t.landing.navbar.menuToggle}
             >
               <AnimatePresence mode="wait" initial={false}>
                 {mobileOpen ? (
@@ -175,13 +177,13 @@ export default function Navbar() {
                       <Phone className="w-4 h-4 text-peach-500" />
                     </div>
                     <div>
-                      <p className="font-semibold">Butuh Bantuan Darurat?</p>
-                      <p className="text-muted text-xs">Hotline: 119 ext 8</p>
+                      <p className="font-semibold">{t.landing.navbar.emergency}</p>
+                      <p className="text-muted text-xs">{t.landing.navbar.hotline}</p>
                     </div>
                   </a>
                   <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
                     <button className="w-full py-3 text-sm font-semibold text-white bg-sage-500 rounded-xl">
-                      Daftar Gratis — 100% Gratis
+                      {t.landing.navbar.freeRegister}
                     </button>
                   </Link>
                 </div>

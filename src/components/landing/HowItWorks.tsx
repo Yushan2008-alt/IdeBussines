@@ -3,43 +3,45 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { UserPlus, HeartHandshake, TrendingUp } from "lucide-react";
-
-const STEPS = [
-  {
-    number: "01",
-    icon:   UserPlus,
-    title:  "Daftar dalam 60 Detik",
-    desc:   "Buat akun gratis hanya dengan email. Tidak ada pertanyaan panjang, tidak ada data sensitif yang wajib diisi. Privasimu adalah prioritas kami.",
-    color:  "bg-sage-100",
-    iconColor: "text-sage-600",
-    accent: "border-sage-300",
-    detail: ["Tanpa nomor telepon", "Nama bisa anonim", "Data dienkripsi"],
-  },
-  {
-    number: "02",
-    icon:   HeartHandshake,
-    title:  "Ceritakan Perasaanmu",
-    desc:   "Gunakan mood journal, bicara dengan Teduh Bot, atau bergabung di komunitas Ruang Cerita. Tidak ada cara yang salah untuk memulai.",
-    color:  "bg-lavender-100",
-    iconColor: "text-lavender-500",
-    accent: "border-lavender-300",
-    detail: ["Jurnal harian", "AI Companion 24/7", "Komunitas anonim"],
-  },
-  {
-    number: "03",
-    icon:   TrendingUp,
-    title:  "Tumbuh Bersama Waktu",
-    desc:   "Pantau perjalanan emosionalmu. Setiap entri jurnal, setiap sesi pernapasan, dan setiap percakapan membantumu memahami dirimu sendiri lebih dalam.",
-    color:  "bg-peach-100",
-    iconColor: "text-peach-500",
-    accent: "border-peach-300",
-    detail: ["Mood trend mingguan", "Insight personal AI", "Progress gamifikasi"],
-  },
-];
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function HowItWorks() {
+  const { t } = useLanguage();
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  const STEPS = [
+    {
+      number: "01",
+      icon:   UserPlus,
+      title:  t.landing.howItWorks.steps.step1Title,
+      desc:   t.landing.howItWorks.steps.step1Desc,
+      color:  "bg-sage-100",
+      iconColor: "text-sage-600",
+      accent: "border-sage-300",
+      detail: t.landing.howItWorks.steps.step1Chips,
+    },
+    {
+      number: "02",
+      icon:   HeartHandshake,
+      title:  t.landing.howItWorks.steps.step2Title,
+      desc:   t.landing.howItWorks.steps.step2Desc,
+      color:  "bg-lavender-100",
+      iconColor: "text-lavender-500",
+      accent: "border-lavender-300",
+      detail: t.landing.howItWorks.steps.step2Chips,
+    },
+    {
+      number: "03",
+      icon:   TrendingUp,
+      title:  t.landing.howItWorks.steps.step3Title,
+      desc:   t.landing.howItWorks.steps.step3Desc,
+      color:  "bg-peach-100",
+      iconColor: "text-peach-500",
+      accent: "border-peach-300",
+      detail: t.landing.howItWorks.steps.step3Chips,
+    },
+  ];
 
   return (
     <section id="how-it-works" className="py-28 bg-white relative overflow-hidden">
@@ -59,14 +61,13 @@ export default function HowItWorks() {
           className="text-center mb-20"
         >
           <p className="text-sm font-semibold text-lavender-500 tracking-widest uppercase mb-3">
-            Cara Kerja
+            {t.landing.howItWorks.title}
           </p>
           <h2 className="font-display text-4xl xl:text-5xl text-forest font-semibold leading-tight mb-4">
-            Sesederhana <span className="gradient-text">Tiga Langkah</span>
+            {t.landing.howItWorks.heading}
           </h2>
           <p className="text-muted text-lg max-w-lg mx-auto leading-relaxed">
-            Kami tahu memulai adalah bagian yang tersulit.
-            Itu sebabnya kami membuatnya semudah mungkin.
+            {t.landing.howItWorks.description}
           </p>
         </motion.div>
 
@@ -118,7 +119,7 @@ export default function HowItWorks() {
 
                 {/* Detail chips */}
                 <div className="flex flex-wrap gap-2">
-                  {step.detail.map((d, j) => (
+                  {step.detail.map((d: string, j: number) => (
                     <span
                       key={j}
                       className="text-xs font-medium text-forest bg-white border border-border rounded-full px-3 py-1"

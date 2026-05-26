@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { useLanguage } from "@/lib/i18n/context";
 
 interface Stat {
   value:    number;
@@ -12,33 +13,6 @@ interface Stat {
   color:    string;
   emoji:    string;
 }
-
-const STATS: Stat[] = [
-  {
-    value:    19,
-    suffix:   " Juta+",
-    label:    "Orang Indonesia",
-    sublabel: "mengalami gangguan jiwa ringan-berat (Riskesdas, 2018)",
-    color:    "from-lavender-100 to-lavender-50",
-    emoji:    "🧠",
-  },
-  {
-    value:    95,
-    suffix:   "%",
-    label:    "Tidak Mencari Bantuan",
-    sublabel: "karena stigma, biaya, atau tidak tahu harus ke mana",
-    color:    "from-peach-100 to-peach-50",
-    emoji:    "💬",
-  },
-  {
-    value:    100,
-    suffix:   "% Gratis",
-    label:    "Selamanya",
-    sublabel: "RuangTeduh tidak pernah memungut biaya dari penggunanya",
-    color:    "from-sage-100 to-sage-50",
-    emoji:    "💚",
-  },
-];
 
 /* Count-up hook */
 function useCountUp(target: number, inView: boolean, duration = 1800) {
@@ -88,8 +62,36 @@ function StatCard({ stat, index }: { stat: Stat; index: number }) {
 }
 
 export default function StatsSection() {
+  const { t } = useLanguage();
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
+
+  const STATS: Stat[] = [
+    {
+      value:    19,
+      suffix:   " Juta+",
+      label:    t.landing.stats.stat1Label,
+      sublabel: t.landing.stats.stat1Sub,
+      color:    "from-lavender-100 to-lavender-50",
+      emoji:    "🧠",
+    },
+    {
+      value:    95,
+      suffix:   "%",
+      label:    t.landing.stats.stat2Label,
+      sublabel: t.landing.stats.stat2Sub,
+      color:    "from-peach-100 to-peach-50",
+      emoji:    "💬",
+    },
+    {
+      value:    100,
+      suffix:   "% Gratis",
+      label:    t.landing.stats.stat3Label,
+      sublabel: t.landing.stats.stat3Sub,
+      color:    "from-sage-100 to-sage-50",
+      emoji:    "💚",
+    },
+  ];
 
   return (
     <section className="py-24 bg-white relative overflow-hidden">
@@ -110,15 +112,13 @@ export default function StatsSection() {
           className="text-center mb-16"
         >
           <p className="text-sm font-semibold text-sage-600 tracking-widest uppercase mb-3">
-            Mengapa RuangTeduh Hadir
+            {t.landing.stats.title}
           </p>
           <h2 className="font-display text-4xl xl:text-5xl text-forest font-semibold leading-tight max-w-2xl mx-auto">
-            Kesenjangan yang{" "}
-            <span className="gradient-text">Tidak Boleh Kita Abaikan</span>
+            {t.landing.stats.heading}
           </h2>
           <p className="text-muted text-lg mt-4 max-w-xl mx-auto leading-relaxed">
-            Jutaan orang berjuang sendirian tanpa tahu di mana harus mencari bantuan.
-            Itu sebabnya RuangTeduh ada.
+            {t.landing.stats.description}
           </p>
         </motion.div>
 
@@ -136,7 +136,7 @@ export default function StatsSection() {
           transition={{ delay: 0.8 }}
           className="text-center text-xs text-muted-light mt-8"
         >
-          Sumber: Riskesdas 2018, WHO World Mental Health Report 2022, Into The Light Indonesia
+          {t.landing.stats.source}
         </motion.p>
       </div>
 

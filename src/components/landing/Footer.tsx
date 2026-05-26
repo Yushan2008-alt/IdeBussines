@@ -3,29 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sprout, Phone, Heart, Globe, Share2, Mail } from "lucide-react";
-
-const LINKS = {
-  Produk: [
-    { label: "Mood Journal",     href: "/dashboard" },
-    { label: "AI Companion",     href: "/dashboard" },
-    { label: "Crisis SOS",       href: "/dashboard" },
-    { label: "Ruang Cerita",     href: "/dashboard" },
-    { label: "Guided Breathing", href: "/dashboard" },
-    { label: "Safety Plan",      href: "/dashboard" },
-  ],
-  Dukungan: [
-    { label: "Pusat Bantuan",   href: "#" },
-    { label: "FAQ",             href: "#" },
-    { label: "Kontak Tim",      href: "mailto:halo@ruangteduh.id" },
-    { label: "Lapor Masalah",   href: "#" },
-  ],
-  "Tentang Kami": [
-    { label: "Visi & Misi",     href: "#" },
-    { label: "Tim RuangTeduh",  href: "#" },
-    { label: "Blog",            href: "#" },
-    { label: "Karir",           href: "#" },
-  ],
-};
+import { useLanguage } from "@/lib/i18n/context";
 
 const HOTLINES = [
   { label: "Into The Light: 119 ext 8",   href: "tel:119" },
@@ -33,6 +11,31 @@ const HOTLINES = [
 ];
 
 export default function Footer() {
+  const { t } = useLanguage();
+
+  const LINKS = {
+    [t.landing.footer.product]: [
+      { label: t.landing.footer.productLinks[0], href: "/dashboard" },
+      { label: t.landing.footer.productLinks[1], href: "/dashboard" },
+      { label: t.landing.footer.productLinks[2], href: "/dashboard" },
+      { label: t.landing.footer.productLinks[3], href: "/dashboard" },
+      { label: t.landing.footer.productLinks[4], href: "/dashboard" },
+      { label: t.landing.footer.productLinks[5], href: "/dashboard" },
+    ],
+    [t.landing.footer.support]: [
+      { label: t.landing.footer.supportLinks[0], href: "#" },
+      { label: t.landing.footer.supportLinks[1], href: "#" },
+      { label: t.landing.footer.supportLinks[2], href: "mailto:halo@ruangteduh.id" },
+      { label: t.landing.footer.supportLinks[3], href: "#" },
+    ],
+    [t.landing.footer.about]: [
+      { label: t.landing.footer.aboutLinks[0], href: "#" },
+      { label: t.landing.footer.aboutLinks[1], href: "#" },
+      { label: t.landing.footer.aboutLinks[2], href: "#" },
+      { label: t.landing.footer.aboutLinks[3], href: "#" },
+    ],
+  };
+
   return (
     <footer className="bg-forest text-cream relative overflow-hidden" role="contentinfo">
 
@@ -63,8 +66,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-sage-300 leading-relaxed mb-6 max-w-sm text-sm">
-              Platform kesehatan mental 100% gratis yang hadir untuk menemanimu —
-              dengan empati, tanpa penghakiman, kapan pun kamu membutuhkan.
+              {t.landing.footer.brandDesc}
             </p>
             {/* Social icons */}
             <div className="flex gap-3">
@@ -101,8 +103,8 @@ export default function Footer() {
                 <Phone className="w-4 h-4 text-sage-300" />
               </motion.div>
               <div>
-                <p className="font-semibold text-sm text-cream">Butuh Bantuan Darurat?</p>
-                <p className="text-sage-400 text-xs">Hotline tersedia sekarang</p>
+                <p className="font-semibold text-sm text-cream">{t.landing.footer.emergency}</p>
+                <p className="text-sage-400 text-xs">{t.landing.footer.emergencySub}</p>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -117,7 +119,7 @@ export default function Footer() {
               ))}
             </div>
             <p className="text-xs text-sage-400 mt-3">
-              Jika dalam bahaya segera, hubungi <strong className="text-sage-200">112</strong> (darurat nasional)
+              {t.landing.footer.emergencyNote}
             </p>
           </div>
         </div>
@@ -148,21 +150,18 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-sage-700/50 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-sage-400">
-            © {new Date().getFullYear()} RuangTeduh · Dibuat dengan{" "}
-            <Heart className="inline w-3 h-3 fill-sage-400 text-sage-400" /> untuk
-            Indonesia
+            {t.landing.footer.copyright.replace("{year}", String(new Date().getFullYear()))}
           </p>
           <div className="flex gap-5 text-xs text-sage-400">
-            <Link href="#" className="hover:text-cream transition-colors">Kebijakan Privasi</Link>
-            <Link href="#" className="hover:text-cream transition-colors">Syarat Penggunaan</Link>
-            <Link href="#" className="hover:text-cream transition-colors">Aksesibilitas</Link>
+            {t.landing.footer.legal.map((label, i) => (
+              <Link key={i} href="#" className="hover:text-cream transition-colors">{label}</Link>
+            ))}
           </div>
         </div>
 
         {/* Mental health disclaimer */}
         <p className="text-[10px] text-sage-500 text-center mt-6 leading-relaxed max-w-2xl mx-auto">
-          <strong>Penting:</strong> RuangTeduh bukan pengganti diagnosis atau perawatan profesional.
-          Jika kamu mengalami krisis, segera hubungi hotline darurat atau profesional kesehatan jiwa terdekat.
+          {t.landing.footer.disclaimer}
         </p>
       </div>
     </footer>
